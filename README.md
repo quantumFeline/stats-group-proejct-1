@@ -1,0 +1,1 @@
+Project requires Python 2.7.
