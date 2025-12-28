@@ -1,7 +1,7 @@
 from __future__ import print_function
 import random
 
-class Boolean_Network:
+class BooleanNetwork:
     def __init__(self, number_of_nodes=5):
         self.number_of_nodes = number_of_nodes
         #creating random functions governing individual nodes:
@@ -20,7 +20,8 @@ class Boolean_Network:
         # Now the whole network is constructed in a reproducible way
 
     # Helper function for __init__:
-    def create_random_transition(self, number_of_variables):
+    @staticmethod
+    def create_random_transition(number_of_variables):
         binary_sequence = []
         for i in range(2**number_of_variables):
             bite = random.randint(0,1)
@@ -46,28 +47,31 @@ class Boolean_Network:
         print("=======================================")
 
     # Saving the network to a file 
-    def save_network(self, filename):
+    @staticmethod
+    def save_network(filename):
         print("Under construction")
 
     # Loading the network from a file
-    def load_network(self, filename):
+    @staticmethod
+    def load_network(filename):
         print("Under construction")
 
 
     # Helper functions for creating the datasets:
 
-    def binary_to_int(self, list): # Converts a binary list to a number in a "reverse order" (0th index gives 1, 1st index gives 2, 2nd gives 4 etc)
+    @staticmethod
+    def binary_to_int(binary_list): # Converts a binary list to a number in a "reverse order" (0th index gives 1, 1st index gives 2, 2nd gives 4 etc)
         number = 0
-        for i in range(len(list)):
-            number += list[i]*(2**i)
+        for i in range(len(binary_list)):
+            number += binary_list[i] * (2 ** i)
         return number
 
     def int_to_binary(self, number): # Converts a number to a binary list in a "reverse order" (0th index gives 1, 1st index gives 2, 2nd gives 4 etc)
-        list = []
+        binary_list = []
         for i in range(self.number_of_nodes):
-            list.append(number%2)
+            binary_list.append(number%2)
             number = number // 2
-        return list
+        return binary_list
     
     def transition_on_a_single_node(self, which_node, current_state_binary): #which_node: int, current_state_binary: list[int]
         parents, transition = self.transitions[which_node]
@@ -93,7 +97,9 @@ class Boolean_Network:
         return self.binary_to_int(new_state_binary)
     
     # Main dataset-creating function:
-    def create_dataset(self, number_of_datapoints = 1, length = 10, synchronous = False, sampling_frequency = 1, starting_states = []): #number_of_datapoints: int = 1, length: int = 10, synchronous: bool = False, sampling_frequency: int = 1, starting_states: list[int|None] = []
+    def create_dataset(self, number_of_datapoints = 1, length = 10, synchronous = False, sampling_frequency = 1,
+                       starting_states=None):
+        #number_of_datapoints: int = 1, length: int = 10, synchronous: bool = False, sampling_frequency: int = 1, starting_states: list[int|None] = []
         """
         :param number_of_datapoints: Number of trajectories in our dataset, aka the length of output.
         Default 1
@@ -121,10 +127,12 @@ class Boolean_Network:
         (sampling_frequency is required by BNFinder2 when saving the dataset)
         """
         # Preparing the list of starting points:
+        if starting_states is None:
+            starting_states = []
         if len(starting_states)==0:
             starting_states = [None]*number_of_datapoints
         for i in range(len(starting_states)):
-            if starting_states[i]==None:
+            if starting_states[i] is None:
                 starting_states[i] = random.randint(0, (2**self.number_of_nodes)-1)
 
         # Simulating the trajectories:

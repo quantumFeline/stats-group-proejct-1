@@ -1,26 +1,26 @@
 from __future__ import print_function
-from Boolean_Network import Boolean_Network
+from BooleanNetwork import BooleanNetwork
 import random
 
 #======================================================================================================================================================
 
-# Creating a network in a reproducable way:
+# Creating a network in a reproducible way:
 random_seed = 42
 random.seed(random_seed)
 
 number_of_nodes = 5
-network = Boolean_Network(number_of_nodes)
+network = BooleanNetwork(number_of_nodes)
 network.print_network()
 
 # Under construction!
-# For now they do nothing:
+# For now, they do nothing:
 # filename = 'Network.txt'
 # network.save_network(filename)
 # network.load_network(filename) # overwrites the current network
 
 #======================================================================================================================================================
 
-# Creating a detaset in a reproducible way:
+# Creating a dataset in a reproducible way:
 random_seed = 42
 random.seed(random_seed)
 
