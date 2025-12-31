@@ -11,12 +11,12 @@ DEFAULT_TRAJECTORY_LENGTH = 5
 
 if __name__ == '__main__':
     # Creating a network in a reproducible way.
-    # Usage: python CreateDatasets.py [output_filename] [n_nodes]
+    # Usage: python CreateDatasets.py [output_filename] [ground truth filename] [n_nodes]
 
     random.seed(RANDOM_SEED)
 
-    if len(sys.argv) > 2:
-        network = BooleanNetwork(sys.argv[2])
+    if len(sys.argv) > 3:
+        network = BooleanNetwork(sys.argv[3])
     else:
         network = BooleanNetwork(DEFAULT_N_NODES)
 
@@ -24,8 +24,12 @@ if __name__ == '__main__':
 
     # Under construction!
     # For now, they do nothing:
-    # filename = 'Network.txt'
-    # network.save_network(filename)
+    if len(sys.argv) > 2:
+        filename = sys.argv[2]
+    else:
+        filename = 'group_truth_network.txt'
+
+    network.save_network(filename)
     # network.load_network(filename) # overwrites the current network
 
     #======================================================================================================================================================

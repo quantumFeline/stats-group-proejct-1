@@ -2,14 +2,18 @@ from __future__ import print_function
 import random
 
 class BooleanNetwork:
-    def __init__(self, number_of_nodes=5):
+    def __init__(self, number_of_nodes=5, transitions = None):
         """
-        Initialize and immediately generate a random BooleanNetwork.
+        Initialize a random BooleanNetwork.
         :param number_of_nodes: total number of nodes in the network.
+        :param transitions: transitions between nodes in this network. If not provided, generated on the spot randomly.
         """
         self.number_of_nodes = number_of_nodes
         # creating random functions governing individual nodes:
-        self.transitions = self.create_random_boolean_network(number_of_nodes)
+        if transitions is None:
+            self.transitions = self.create_random_boolean_network(number_of_nodes)
+        else:
+            self.transitions = transitions
 
     def create_random_boolean_network(self, number_of_nodes):
         """
@@ -62,15 +66,54 @@ class BooleanNetwork:
             print(" and the transition is ", transition, ".", sep="")
         print("=======================================")
 
-    # Saving the network to a file 
-    @staticmethod
-    def save_network(filename):
-        print("Under construction")
+    def save_network(self, filename):
+        """
+        Save Boolean network to a file in format:
+        ```
+        n_nodes
+        [parent]; [transition]
+        ```
+        :param filename: name of the output file
+        :return: None
+        """
+        with open(filename, 'w') as f:
+            f.write(str(self.number_of_nodes))
+            f.write("\n")
+            for parents, transition in self.transitions:
+                f.write(str(parents))
+                f.write("; ")
+                f.write(str(transition))
+                f.write("\n")
 
-    # Loading the network from a file
     @staticmethod
     def load_network(filename):
-        print("Under construction")
+        """
+        Load Boolean network ground truth from a file in format:
+        ```
+        n_nodes
+        [parent]; [transition]
+        ```
+        :param filename: name of the input file
+        :return: a Boolean network
+        """
+        with open(filename, 'r') as f:
+            n_nodes = int(f.readline())
+            transitions = []
+            for line in f:
+                parents_str, transition_str = line.split('; ')
+
+                # Parse parents
+                parents_inner = parents_str[1:-1].strip()
+                if parents_inner:
+                    parents = [int(p) for p in parents_inner.split(', ')]
+                else:
+                    parents = []
+
+                # Parse transition
+                transition = transition_str[1:-1].strip()
+
+                transitions.append((parents, transition))
+        return BooleanNetwork(n_nodes, transitions)
 
 
     # Helper functions for creating the datasets:
