@@ -1,4 +1,7 @@
 .idea/
 venv/
-output.txt
+*.txt
 *.pyc
+*.pdf
+BNfinder-2.1.1/
+BNfinder-2.1.1.tar.gz

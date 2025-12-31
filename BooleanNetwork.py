@@ -3,12 +3,22 @@ import random
 
 class BooleanNetwork:
     def __init__(self, number_of_nodes=5):
+        """
+        Initialize and immediately generate a random BooleanNetwork.
+        :param number_of_nodes: total number of nodes in the network.
+        """
         self.number_of_nodes = number_of_nodes
-        #creating random functions governing individual nodes:
-        self.transitions = [] # format:
-        # a list of length number_of_nodes of tuples:
-        # first element is a list of parents,
-        # second is a binary sequence (a list) of length 2^number_of_parents representing the transition
+        # creating random functions governing individual nodes:
+        self.transitions = self.create_random_boolean_network(number_of_nodes)
+
+    def create_random_boolean_network(self, number_of_nodes):
+        """
+        Generates a random BooleanNetwork.
+        :param number_of_nodes: total number of nodes in the network.
+        :return: a list of length number_of_nodes of tuples of the format
+        (list of parents, binary sequence of length 2^number_of_parents representing the transition)
+        """
+        transitions = [] # format:
         for n in range(number_of_nodes):
             #pick 0-3 random nodes as parents
             number_of_parents = random.randint(0,3)
@@ -16,12 +26,18 @@ class BooleanNetwork:
             #pick random behaviour of our transition
             transition = self.create_random_transition(number_of_parents)
             #append to self.transitions
-            self.transitions.append((parents, transition))
+            transitions.append((parents, transition))
         # Now the whole network is constructed in a reproducible way
+        return transitions
 
-    # Helper function for __init__:
     @staticmethod
     def create_random_transition(number_of_variables):
+        """
+        Creates a random transition function from n variables.
+        :param number_of_variables: number of input variables.
+        :return: a list of length 2**n describing the random transition function.
+        Each element corresponds to the output value of the function, where the input if the list index.
+        """
         binary_sequence = []
         for i in range(2**number_of_variables):
             bite = random.randint(0,1)
@@ -60,47 +76,71 @@ class BooleanNetwork:
     # Helper functions for creating the datasets:
 
     @staticmethod
-    def binary_to_int(binary_list): # Converts a binary list to a number in a "reverse order" (0th index gives 1, 1st index gives 2, 2nd gives 4 etc)
+    def binary_to_int(binary_list):
+        """
+         Converts a list representing a binary in little-endian format to an integer.
+        :param binary_list: a list representing a binary number.
+        :return: a single integer.
+        """
         number = 0
         for i in range(len(binary_list)):
             number += binary_list[i] * (2 ** i)
         return number
 
-    def int_to_binary(self, number): # Converts a number to a binary list in a "reverse order" (0th index gives 1, 1st index gives 2, 2nd gives 4 etc)
+    def int_to_binary(self, number):
+        """
+        Converts an integer to a list representing a binary number in little-endian format.
+        :param number: a single integer.
+        :return: a list.
+        """
         binary_list = []
         for i in range(self.number_of_nodes):
             binary_list.append(number%2)
             number = number // 2
         return binary_list
     
-    def transition_on_a_single_node(self, which_node, current_state_binary): #which_node: int, current_state_binary: list[int]
-        parents, transition = self.transitions[which_node]
+    def compute_next_node_state(self, node_index, current_state_binary): #which_node: int, current_state_binary: list[int]
+        """
+        Compute the next node's state according to a single transition.
+        :param node_index: which node to compute the next state for.
+        :param current_state_binary: current state of the network, represented as a little-endian binary list.
+        :return: next state of the node, either 1 or 0.
+        """
+        parents, transition = self.transitions[node_index]
         index_binary = []
         for p in parents:
             index_binary.append(current_state_binary[p])
         index = self.binary_to_int(index_binary)
         return transition[index]
     
-    def do_a_transition(self, current_state, synchronous): #current_state: int, synchronous: bool
+    def compute_next_network_state(self, current_state, synchronous): #current_state: int, synchronous: bool
+        """
+        Compute the next state of the network.
+        :param current_state: a single integer representing the current state of the network.
+        :param synchronous: If done synchronously, do all transitions at once for all nodes;
+        otherwise, do it for a random single node.
+        :return: a single integer representing the new network state.
+        """
         current_state_binary = self.int_to_binary(current_state)
-        new_state_binary = [0]*self.number_of_nodes
+        new_state_binary = [0] * self.number_of_nodes
         if synchronous:
             # Do all transitions at once
             for i in range(self.number_of_nodes):
-                new_state_binary[i] = self.transition_on_a_single_node(i, current_state_binary)
+                new_state_binary[i] = self.compute_next_node_state(i, current_state_binary)
         else:
             # Pick a random node to make one transition on, the rest stays the same
             for i in range(self.number_of_nodes):
                 new_state_binary[i] = current_state_binary[i]
             i = random.randint(0, self.number_of_nodes-1)
-            new_state_binary[i] = self.transition_on_a_single_node(i, current_state_binary)
+            new_state_binary[i] = self.compute_next_node_state(i, current_state_binary)
         return self.binary_to_int(new_state_binary)
-    
-    # Main dataset-creating function:
+
     def create_dataset(self, number_of_datapoints = 1, length = 10, synchronous = False, sampling_frequency = 1,
                        starting_states=None):
         #number_of_datapoints: int = 1, length: int = 10, synchronous: bool = False, sampling_frequency: int = 1, starting_states: list[int|None] = []
         """
+        Creates a dataset of consecutive states of a network.
+
         :param number_of_datapoints: Number of trajectories in our dataset, aka the length of output.
         Default 1
 
@@ -126,16 +166,16 @@ class BooleanNetwork:
         of ints that represent the consecutive states in trajectories
         (sampling_frequency is required by BNFinder2 when saving the dataset)
         """
-        # Preparing the list of starting points:
+        # Prepare the list of starting points
         if starting_states is None:
             starting_states = []
-        if len(starting_states)==0:
-            starting_states = [None]*number_of_datapoints
+        if len(starting_states) == 0:
+            starting_states = [None] * number_of_datapoints
         for i in range(len(starting_states)):
             if starting_states[i] is None:
                 starting_states[i] = random.randint(0, (2**self.number_of_nodes)-1)
 
-        # Simulating the trajectories:
+        # Simulate the trajectories
         output = []
         for i in range(number_of_datapoints):
             # Setting the starting point
@@ -144,7 +184,7 @@ class BooleanNetwork:
             states_skipped = 0
             while len(current_trajectory)<length:
                 # Do a transition form current_state to the next one and save it as a new current_state
-                current_state = self.do_a_transition(current_state, synchronous)
+                current_state = self.compute_next_network_state(current_state, synchronous)
                 if states_skipped == sampling_frequency-1:
                     current_trajectory.append(current_state)
                     states_skipped=0
@@ -155,7 +195,7 @@ class BooleanNetwork:
     
     # Printing and saving the datasets created:
 
-    def print_dataset(self, dataset, as_binary): #dataset: list[list[int]], as_binary: bool = False
+    def print_dataset(self, dataset, as_binary): # dataset: list[list[int]], as_binary: bool = False
         output, sampling_frequency = dataset
         print("=======================================")
         print("The sampling frequency for this dataset was ", sampling_frequency, ".", sep="")
