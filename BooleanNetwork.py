@@ -135,16 +135,16 @@ class BooleanNetwork:
             new_state_binary[i] = self.compute_next_node_state(i, current_state_binary)
         return self.binary_to_int(new_state_binary)
 
-    def create_dataset(self, number_of_datapoints = 1, length = 10, synchronous = False, sampling_frequency = 1,
+    def create_dataset(self, number_of_datapoints = 1, trajectory_length = 10, synchronous = False, sampling_frequency = 1,
                        starting_states=None):
-        #number_of_datapoints: int = 1, length: int = 10, synchronous: bool = False, sampling_frequency: int = 1, starting_states: list[int|None] = []
+        #number_of_datapoints: int = 1, trajectory_length: int = 10, synchronous: bool = False, sampling_frequency: int = 1, starting_states: list[int|None] = []
         """
         Creates a dataset of consecutive states of a network.
 
         :param number_of_datapoints: Number of trajectories in our dataset, aka the length of output.
         Default 1
 
-        :param length: the length of our trajectories; even if sampling_frequency!=1, we still get the same length.
+        :param trajectory_length: the length of our trajectories; even if sampling_frequency!=1, we still get the same length.
         Default 10
 
         :param synchronous: If True, all transitions will be synchronous, otherwise, they will be asynchronous.
@@ -161,9 +161,8 @@ class BooleanNetwork:
         Default []
 
         :return: is a two-element list [output, sampling_frequency],
-        where output is a list of length `number_of_datapoints`
-        of lists of length `length`
-        of ints that represent the consecutive states in trajectories
+        where output is a matrix (list of lists) of size number_of_datapoints x trajectory_length,
+        where each element (i, j) represent the consecutive j-th state in i-th trajectory
         (sampling_frequency is required by BNFinder2 when saving the dataset)
         """
         # Prepare the list of starting points
@@ -182,14 +181,14 @@ class BooleanNetwork:
             current_trajectory = [starting_states[i]] # a list of ints that represent the states
             current_state = current_trajectory[-1]
             states_skipped = 0
-            while len(current_trajectory)<length:
+            while len(current_trajectory) < trajectory_length:
                 # Do a transition form current_state to the next one and save it as a new current_state
                 current_state = self.compute_next_network_state(current_state, synchronous)
                 if states_skipped == sampling_frequency-1:
                     current_trajectory.append(current_state)
-                    states_skipped=0
+                    states_skipped = 0
                 else:
-                    states_skipped+=1
+                    states_skipped += 1
             output.append(current_trajectory)
         return [output, sampling_frequency]
     
@@ -213,7 +212,15 @@ class BooleanNetwork:
         print("")
         print("=======================================")
 
-    def save_dataset(self, filename, dataset): #filename: string, dataset: list[list[int]]
+    def save_dataset_old(self, filename, dataset): #filename: string, dataset: list[list[int]]
+        """
+        Save dataset in a format
+        `# trajectory time x0 ... xn`
+        in blocks of trajectories
+        :param filename:
+        :param dataset:
+        :return:
+        """
         output, sampling_frequency = dataset
         with open(filename, 'w') as f:
             f.write("#trajectory    time") # Headers
@@ -236,4 +243,49 @@ class BooleanNetwork:
                 f.write("#")
                 if index_of_trajectory < len(output)-1:
                     f.write("\n")
+            print("File saved as ", filename, sep="")
+
+    def save_dataset(self, filename, dataset_tuple): #filename: string, dataset: list[list[int]]
+        """
+        Save the dataset in a table of the following format:
+        `conditions serie:time ... serie:time
+        x0
+        ...
+        xn
+        :param filename:
+        :param dataset:
+        :return:
+        """
+        dataset, sampling_frequency = dataset_tuple
+        with open(filename, 'w') as f:
+            f.write("conditions") # Header
+            for index_of_trajectory in range(len(dataset)):
+                for index_of_state in range(len(dataset[index_of_trajectory])):
+                    f.write(" ")
+                    f.write(str(index_of_trajectory))
+                    f.write(":")
+                    f.write(str(index_of_state))
+
+            f.write("\n")
+
+            # Unwrap the binaries in the dataset
+            dataset_unwrapped = []
+            for index_of_trajectory in range(len(dataset)):
+                trajectory_unwrapped = []
+                for index_of_state in range(len(dataset[index_of_trajectory])):
+                    state_binary = self.int_to_binary(dataset[index_of_trajectory][index_of_state])
+                    trajectory_unwrapped.append(state_binary)
+                dataset_unwrapped.append(trajectory_unwrapped)
+
+            # Write
+            for index_of_variable in range(len(dataset_unwrapped[0][0])):
+                f.write("x")
+                f.write(str(index_of_variable))
+
+                for index_of_trajectory in range(len(dataset_unwrapped)):
+                    for index_of_state in range(len(dataset_unwrapped[index_of_trajectory])):
+                        f.write("   ")
+                        f.write(str(dataset_unwrapped[index_of_trajectory][index_of_state][index_of_variable]))
+
+                f.write("\n")
             print("File saved as ", filename, sep="")

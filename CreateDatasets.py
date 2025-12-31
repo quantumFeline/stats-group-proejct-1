@@ -6,6 +6,8 @@ import sys
 RANDOM_SEED = 42
 DEFAULT_N_NODES = 5
 AS_BINARY = True # False is more concise, but is harder to understand where the resulting trajectory came from
+DEFAULT_DATASET_LENGTH = 5
+DEFAULT_TRAJECTORY_LENGTH = 5
 
 if __name__ == '__main__':
     # Creating a network in a reproducible way.
@@ -30,8 +32,8 @@ if __name__ == '__main__':
 
     # Create a dataset in a reproducible way
 
-    number_of_datapoints = 5
-    length_of_one_trajectory = 5
+    number_of_datapoints = DEFAULT_DATASET_LENGTH
+    length_of_one_trajectory = DEFAULT_TRAJECTORY_LENGTH
     synchronous = False
     sampling_frequency = 1
     starting_states = [] # if left empty, the starting states will be randomized for each datapoint; uncomment the next line for always starting at 0
