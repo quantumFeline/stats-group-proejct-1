@@ -55,3 +55,7 @@ if __name__ == '__main__':
     # Print and save the dataset
     network.print_dataset(dataset, AS_BINARY)
     network.save_dataset(args.output, dataset) #saved in the format required for BNFinder2
+    
+    # to run BNF, run:
+    # bnf -e output.txt -s MDL -n network_mdl.txt -g
+    # bnf -e output.txt -s BDE -n network_bde.txt [-i 10 -o 0.01]
