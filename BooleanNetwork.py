@@ -9,7 +9,6 @@ class BooleanNetwork:
         :param transitions: transitions between nodes in this network. If not provided, generated on the spot randomly.
         """
         self.number_of_nodes = number_of_nodes
-        # creating random functions governing individual nodes:
         if transitions is None:
             self.transitions = self.create_random_boolean_network(number_of_nodes)
         else:
@@ -22,14 +21,12 @@ class BooleanNetwork:
         :return: a list of length number_of_nodes of tuples of the format
         (list of parents, binary sequence of length 2^number_of_parents representing the transition)
         """
+        # Create random functions governing individual nodes.
         transitions = [] # format:
         for n in range(number_of_nodes):
-            #pick 0-3 random nodes as parents
             number_of_parents = random.randint(0,3)
             parents = random.sample(range(number_of_nodes), number_of_parents) # if number_of_parents = 0, then this returns an empty list
-            #pick random behaviour of our transition
             transition = self.create_random_transition(number_of_parents)
-            #append to self.transitions
             transitions.append((parents, transition))
         # Now the whole network is constructed in a reproducible way
         return transitions
@@ -237,56 +234,29 @@ class BooleanNetwork:
     
     # Printing and saving the datasets created:
 
-    def print_dataset(self, dataset, as_binary): # dataset: list[list[int]], as_binary: bool = False
-        output, sampling_frequency = dataset
+    def print_dataset(self, dataset_tuple, as_binary=True): # dataset: list[list[int]], as_binary: bool = False
+        """
+        Print the dataset in human-readable format.
+        :param dataset_tuple: tuple of the format (dataset, frequency). For details, see #create_dataset
+        :param as_binary: whether to output the transitions as integers or as lists (default: lists)
+        :return: None
+        """
+        dataset, sampling_frequency = dataset_tuple
         print("=======================================")
         print("The sampling frequency for this dataset was ", sampling_frequency, ".", sep="")
-        print("The dataset has ", len(output), " datapoint(s):", sep="")
-        for i in range(len(output)):
+        print("The dataset has ", len(dataset), " datapoint(s):", sep="")
+        for i in range(len(dataset)):
             print("")
             print("Datapoint ", i, " is: ", sep="", end="")
-            for j in range(len(output[i])):
+            for j in range(len(dataset[i])):
                 if as_binary:
-                    print(self.int_to_binary(output[i][j]), end="") # Correct this if the format turns out to be different
+                    print(self.int_to_binary(dataset[i][j]), end="") # Correct this if the format turns out to be different
                 else:
-                    print(output[i][j], end="")
-                if j<len(output[i])-1:
+                    print(dataset[i][j], end="")
+                if j<len(dataset[i])-1:
                     print(" --> ", end="")
         print("")
         print("=======================================")
-
-    def save_dataset_old(self, filename, dataset): #filename: string, dataset: list[list[int]]
-        """
-        Save dataset in a format
-        `# trajectory time x0 ... xn`
-        in blocks of trajectories
-        :param filename:
-        :param dataset:
-        :return:
-        """
-        output, sampling_frequency = dataset
-        with open(filename, 'w') as f:
-            f.write("#trajectory    time") # Headers
-            for index_of_node in range(self.number_of_nodes):
-                f.write("   x")
-                f.write(str(index_of_node))
-            f.write("\n")
-            for index_of_trajectory in range(len(output)):
-                time_of_observation = 0
-                for index_of_state in range(len(output[index_of_trajectory])): # Each state governs a single line
-                    f.write(str(index_of_trajectory+1)) # Index of a trajectory starting from 1
-                    f.write("   ")
-                    f.write(str(time_of_observation)) # Time of a given observation starting from 0
-                    time_of_observation += sampling_frequency
-                    state_binary = self.int_to_binary(output[index_of_trajectory][index_of_state])
-                    for bite in state_binary:
-                        f.write("   ")
-                        f.write(str(bite))
-                    f.write("\n")
-                f.write("#")
-                if index_of_trajectory < len(output)-1:
-                    f.write("\n")
-            print("File saved as ", filename, sep="")
 
     def save_dataset(self, filename, dataset_tuple): #filename: string, dataset: list[list[int]]
         """
@@ -295,9 +265,9 @@ class BooleanNetwork:
         x0
         ...
         xn
-        :param filename:
-        :param dataset:
-        :return:
+        :param filename: output filename for the dataset in the format required by BNF
+        :param dataset_tuple: tuple of the format (dataset, frequency). For details, see #create_dataset
+        :return: None
         """
         dataset, sampling_frequency = dataset_tuple
         with open(filename, 'w') as f:
