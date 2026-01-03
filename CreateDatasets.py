@@ -10,7 +10,7 @@ AS_BINARY = True # False is more concise, but is harder to understand where the 
 DEFAULT_DATASET_LENGTH = 5
 DEFAULT_TRAJECTORY_LENGTH = 5
 DEFAULT_OUTPUT_FILENAME = "output.txt"
-DEFAULT_GROUND_TRUTH_FILENAME = "group_truth_network.txt"
+DEFAULT_GROUND_TRUTH_FILENAME = "ground_truth_network.txt"
 DEFAULT_SYNC = False
 
 if __name__ == '__main__':
