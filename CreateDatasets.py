@@ -39,7 +39,13 @@ if __name__ == '__main__':
 
     network.save_network(args.ground_truth)
     # network.load_network(args.ground_truth) # overwrites the current network
+    
+    loaded_network = BooleanNetwork.load_network(args.ground_truth)
+    print("\n===== ORIGINAL NETWORK =====")
+    network.print_network()
 
+    print("\n===== LOADED NETWORK =====")
+    loaded_network.print_network()
     #======================================================================================================================================================
 
     # Create a dataset in a reproducible way

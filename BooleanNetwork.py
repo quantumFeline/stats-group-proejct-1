@@ -97,17 +97,26 @@ class BooleanNetwork:
             n_nodes = int(f.readline())
             transitions = []
             for line in f:
+                # Split the line into parents and transition parts
+                # Example line: "[0, 1]; [0, 1, 1, 1]\n"
                 parents_str, transition_str = line.split('; ')
+                # parents_str = "[0, 1]"
+                # transition_str = "[0, 1, 1, 1]\n" (includes the newline character at the end)
 
                 # Parse parents
-                parents_inner = parents_str[1:-1].strip()
+                parents_inner = parents_str[1:-1].strip() # remove brackets
                 if parents_inner:
                     parents = [int(p) for p in parents_inner.split(', ')]
                 else:
                     parents = []
 
                 # Parse transition
-                transition = transition_str[1:-1].strip()
+                transition_inner = transition_str.strip() # remove newline and spaces
+                transition_inner = transition_inner.lstrip('[').rstrip(']') # remove brackets explicitly from both sides
+                if transition_inner:
+                    transition = [int(x) for x in transition_inner.split(', ')]
+                else:
+                    transition = []
 
                 transitions.append((parents, transition))
         return BooleanNetwork(n_nodes, transitions)
