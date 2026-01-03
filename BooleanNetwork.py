@@ -27,6 +27,11 @@ class BooleanNetwork:
             number_of_parents = random.randint(0,3)
             parents = random.sample(range(number_of_nodes), number_of_parents) # if number_of_parents = 0, then this returns an empty list
             transition = self.create_random_transition(number_of_parents)
+            # NOTE: If number_of_parents == 0, transition is a list with a single value [0] or [1].
+            # Such nodes have no parents, so their value should remain constant in the dataset.
+            # To ensure this, compute_next_node_state must check if len(parents) == 0 and return the current state.
+            # Without this check, the node's state would be overwritten by transition[0] at every step.
+            
             transitions.append((parents, transition))
         # Now the whole network is constructed in a reproducible way
         return transitions
@@ -151,11 +156,20 @@ class BooleanNetwork:
     def compute_next_node_state(self, node_index, current_state_binary): #which_node: int, current_state_binary: list[int]
         """
         Compute the next node's state according to a single transition.
+        
+        - Nodes with parents: follow the Boolean function (transition).
+        - Nodes without parents: keep their current value (do not use transition).
+    
         :param node_index: which node to compute the next state for.
         :param current_state_binary: current state of the network, represented as a little-endian binary list.
         :return: next state of the node, either 1 or 0.
         """
         parents, transition = self.transitions[node_index]
+        
+        if len(parents) == 0:
+            # Node without parents keeps its current value
+            return current_state_binary[node_index]
+        
         index_binary = []
         for p in parents:
             index_binary.append(current_state_binary[p])
