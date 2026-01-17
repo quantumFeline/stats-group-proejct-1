@@ -6,10 +6,10 @@ import subprocess
 DATASETS_DIR = "datasets"
 RESULTS_DIR = "results"
 
-sampling_frequencies = [1, 2, 3]
-num_trajectories_list = [1, 2, 3]
-trajectory_lengths = [5, 10, 15, 20]
-transient_fractions = [2.0/5, 3.0/5, 4.0/5]
+SAMPLING_FREQUENCIES = [1, 2, 3]
+N_TRAJECTORIES_LIST = [1, 2, 3]
+TRAJECTORY_LENGTHS = [5, 10, 15, 20]
+TRANSIENT_FRACTIONS = [2.0 / 5, 3.0 / 5, 4.0 / 5]
 
 modes = ["synchronous", "asynchronous"]
 scores = ["MDL", "BDE"]
@@ -46,10 +46,10 @@ def main():
         for num_nodes in range(5, 17):
             print("\n--- {} nodes ---".format(num_nodes))
 
-            for sf in sampling_frequencies:
-                for ntraj in num_trajectories_list:
-                    for tlen in trajectory_lengths:
-                        for tf in transient_fractions:
+            for sf in SAMPLING_FREQUENCIES:
+                for ntraj in N_TRAJECTORIES_LIST:
+                    for tlen in TRAJECTORY_LENGTHS:
+                        for tf in TRANSIENT_FRACTIONS:
 
                             tf_int = int(tf * 100)
 

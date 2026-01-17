@@ -4,11 +4,23 @@ import random
 from BooleanNetwork import BooleanNetwork
 from StateSpaceAnalysisSynchronous import StateSpaceAnalyzer
 from AttractorsAsynchronousNetworkx import AsyncAnalyzerNX
-import math
 from itertools import product
 import os
 
 random.seed(1)
+
+def collect_attractor_states(state_info, mode):
+    attractor_states = set()
+    for state, info in state_info.items():
+        if mode == 'synchronous':
+            if info.get("distance", 0) == 0:
+                attractor_states.add(state)
+        elif mode == 'asynchronous':
+            if info.get("is_attractor", False):
+                attractor_states.add(state)
+        else:
+            raise ValueError("Unknown mode: %s" % mode)
+    return attractor_states
 
 def generate_long_trajectories(network, state_info, max_length=1000, mode='synchronous'):
     """
@@ -29,16 +41,7 @@ def generate_long_trajectories(network, state_info, max_length=1000, mode='synch
     # -----------------------------
     # Prepare attractor info
     # -----------------------------
-    attractor_states = set()
-    for state, info in state_info.items():
-        if mode == 'synchronous':
-            if info.get("distance", 0) == 0:
-                attractor_states.add(state)
-        elif mode == 'asynchronous':
-            if info.get("is_attractor", False):
-                attractor_states.add(state)
-        else:
-            raise ValueError("Unknown mode: %s" % mode)
+    attractor_states = collect_attractor_states(state_info, mode)
 
     all_states = list(state_info.keys())
     trajectories = []
@@ -86,7 +89,7 @@ def sample_dataset_from_long_trajectories(
     Sample dataset fragments from pre-generated long trajectories.
 
     Logic:
-    - For each trajectory, try all offsets 0..sampling_frequency-1
+    - For each trajectory, try all offsets 0...sampling_frequency-1
     - Take the trajectory going in steps `sampling_frequency` from the offset to the end
     - Check if it contains enough transient and attractor states
     - If yes, candidate is accepted
@@ -105,16 +108,7 @@ def sample_dataset_from_long_trajectories(
     # -----------------------------
     # Identify attractor states
     # -----------------------------
-    attractor_states = set()
-    for state, info in state_info.items():
-        if mode == 'synchronous':
-            if info.get("distance", 0) == 0:
-                attractor_states.add(state)
-        elif mode == 'asynchronous':
-            if info.get("is_attractor", False):
-                attractor_states.add(state)
-        else:
-            raise ValueError("Unknown mode: %s" % mode)
+    attractor_states = collect_attractor_states(state_info, mode)
 
     required_transient = int(round(transient_fraction * trajectory_length))
     required_attractor = trajectory_length - required_transient
@@ -166,7 +160,6 @@ def sample_dataset_from_long_trajectories(
         sampled_trajectories.append(final_fragment)
 
     return sampled_trajectories
-
 
 def ensure_dirs():
     if not os.path.exists("ground_truth_networks"):
@@ -227,7 +220,7 @@ def generate_and_sample_network(
         trajectory_lengths = [5, 10, 15, 20]
         transient_fractions = [2.0/5, 3.0/5, 4.0/5]
 
-        for sf, ntraj, tlen, tf in product(
+        for sample_frequency, n_traj, traj_len, transient_fraction in product(
             sampling_frequencies,
             num_trajectories_list,
             trajectory_lengths,
@@ -237,10 +230,10 @@ def generate_and_sample_network(
                 long_trajectories,
                 state_info,
                 mode,
-                ntraj,
-                tlen,
-                tf,
-                sf
+                n_traj,
+                traj_len,
+                transient_fraction,
+                sample_frequency
             )
 
             if not sampled_dataset:
@@ -249,20 +242,19 @@ def generate_and_sample_network(
 
             dataset_filename = (
                 "datasets/dataset_{}nodes_{}_sf{}_n{}_len{}_tf{}.txt"
-                .format(num_nodes, mode, sf, ntraj, tlen, int(tf*100))
+                .format(num_nodes, mode, sample_frequency, n_traj, traj_len, int(transient_fraction*100))
             )
 
-            network.save_dataset(dataset_filename, [sampled_dataset, sf])
+            network.save_dataset(dataset_filename, [sampled_dataset, sample_frequency])
             print("Dataset saved as {}".format(dataset_filename))
 
 
 
 if __name__ == "__main__":
-    for mode in ['synchronous', 'asynchronous']:
+    for synchronicity_mode in ['synchronous', 'asynchronous']:
         print("\n===============================================")
-        print("Mode:", mode)
+        print("Mode:", synchronicity_mode)
         print("===============================================")
-        for num_nodes in range(5, 17):
-            print("\n--- Boolean network with {} nodes ---".format(num_nodes))
-            generate_and_sample_network(num_nodes=num_nodes, max_length=100)
-
+        for num_nodes_in_network in range(5, 17):
+            print("\n--- Boolean network with {} nodes ---".format(num_nodes_in_network))
+            generate_and_sample_network(num_nodes=num_nodes_in_network, max_length=100)

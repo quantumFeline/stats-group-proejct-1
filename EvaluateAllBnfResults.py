@@ -14,10 +14,10 @@ GROUND_TRUTH_DIR = "ground_truth_networks"
 RESULTS_DIR = "results"
 TABLES_DIR = "tables"
 
-sampling_frequencies = [1, 2, 3]
-num_trajectories_list = [1, 2, 3]
-trajectory_lengths = [5, 10, 15, 20]
-transient_fractions = [2.0/5, 3.0/5, 4.0/5]
+SAMPLING_FREQUENCIES = [1, 2, 3]
+N_TRAJECTORIES_LIST = [1, 2, 3]
+TRAJECTORY_LENGTHS = [5, 10, 15, 20]
+TRANSIENT_FRACTIONS = [2.0 / 5, 3.0 / 5, 4.0 / 5]
 
 modes = ["synchronous", "asynchronous"]
 scores = ["MDL", "BDE"]
