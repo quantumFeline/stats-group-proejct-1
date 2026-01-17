@@ -14,6 +14,8 @@
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{listings}
+\usepackage{multirow}
+\usepackage{float}
 
 \title{Statistical Data Analysis 2 - Final Project - Report}
 \author{Czapiewska Magdalena, Khodina Anastasiya, Nachaieva Veronika, Znamierowski Mikołaj}
@@ -45,7 +47,90 @@ TODO: I think that here we should have a description of BooleanNetworks.py
 
 \subsection{Evaluation metrics chosen}
 
+Boolean networks are directed graphs. To compute evaluation metrics, we represent the networks using adjacency matrices, where 
+$A[i, j] = 1$ if and only if there is a directed edge from $x_i$ to $x_j$, and $A[i, j] = 0$ otherwise.\newline\newline
+The accuracy of the reconstructed networks is assessed using five measures: recall, precision, F1-score, normalized Hamming distance and normalized Structural Hamming distance. Ideally, recall, precision, and F1-score should be high, whereas the normalized Hamming and Structural Hamming distances should be low.\newline\newline
+All functions for computing metrics from adjacency matrices, as well as for generating adjacency matrices from ground truth files or SIF files (outputs of BNFinder), are implemented in the file \texttt{EvaluationMetrics.py}.\newline\newline
+{\large \textbf{Description of metrices and justification of choice}}\newline\newline
+\noindent
+We define the basic quantities as follows:
+
+\begin{itemize}
+    \item $\mathrm{TP}$ (true positives) -- the number of edges present in both the ground truth network and the reconstructed network
+    \item $\mathrm{FP}$ (false positives) -- the number of edges present in the reconstructed network but absent in the ground truth network
+    \item $\mathrm{TN}$ (true negatives) -- the number of ordered pairs of nodes without an edge in both the ground truth and reconstructed networks
+    \item $\mathrm{FN}$ (false negatives) -- the number of edges present in the ground truth network but missing in the reconstructed network
+\end{itemize}
+\noindent
+\fbox{\textbf{Recall}}
+\[
+\mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}}
+\]
+Justification: recall allows measuring the fraction of dependencies (edges) present in the ground truth network that are also identified in the reconstructed network.\newline\newline
+\noindent
+\fbox{\textbf{Precision}}
+\[
+\mathrm{Precision} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}}
+\]
+Justification: precision allows quantifying the proportion of edges inferred by the algorithm that are indeed present in the ground truth network.\newline\newline
+\noindent
+\fbox{\textbf{F1-score}}
+\[
+\mathrm{F1} = 2 \cdot \frac{\mathrm{Precision} \cdot \mathrm{Recall}}
+{\mathrm{Precision} + \mathrm{Recall}}
+\]
+Justification: the F1-score is the harmonic mean of precision and recall. It reaches high values only if both precision and recall are high, making it a good indicator of the quality of the reconstruction, as it measures both whether the algorithm correctly reconstructed the edges that exist and whether it avoided reconstructing edges that should not be present.\newline\newline
+\noindent
+\fbox{\textbf{Hamming distance}}\newline\newline
+\noindent
+The Hamming distance counts the total number of differing entries between
+the adjacency matrices of the ground truth and reconstructed networks:
+\[
+\mathrm{HD} = \sum_{i,j} \mathbf{1}[A[i,j] \neq B[i,j]],
+\]
+where $A$ and $B$ are the adjacency matrices.\newline\newline
+To compare the reconstruction accuracy across networks of different sizes, we define the normalized Hamming distance by dividing the Hamming distance by the total number of ordered pairs of vertices:
+\[
+\mathrm{HD}_{\mathrm{norm}} = \frac{\mathrm{HD}}{n^2},
+\]
+where $n$ is the number of nodes in the network.\newline\newline
+Justification: the normalized Hamming distance allows measuring the fraction of ordered pairs of vertices $(i, j)$ for which either a directed edge from $i$ to $j$ exists in the ground truth but is missing in the reconstruction, or the edge is inferred by the reconstruction but does not exist in the ground truth.\newline\newline
+\noindent
+\fbox{\textbf{Structural Hamming distance}}\newline\newline
+\noindent
+The Structural Hamming distance (SHD) measures the number of unordered pairs of vertices for which the interactions in the reconstructed network need to be modified to match the ground truth network. Each inconsistency between a pair of vertices - whether it requires an edge addition, removal, or reversal - counts as one operation. In other words, we count whether a pair is incorrect, without distinguishing the type of correction needed (and without counting the number of corrections - addition of 2 edges counts as 1).\newline\newline
+Consider a pair of vertices $(i, j)$:
+\begin{itemize}
+\item{For self-loops ($i = j$), a mismatch between the ground truth and reconstructed network counts as one operation.}
+\item{Now consider $i \neq j$. Let $(p, q)$ denote the edge configuration in the network, where $p = 1$ if there is an edge $i \to j$ (otherwise $p = 0$) and $q = 1$ if there is an edge $j \to i$ (otherwise $q = 0$). The following table summarizes the SHD contribution for each possible combination of ground truth and reconstructed configurations:}
+\end{itemize}
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\multirow{2}{*}{Ground truth $(p,q)$} & \multicolumn{4}{c|}{Reconstructed $(p,q)$} \\
+\cline{2-5}
+ & (0,0) & (1,0) & (0,1) & (1,1) \\ 
+\hline
+(0,0) & 0 & 1 (remove $i\to j$) & 1 (remove $j\to i$) & 1 (remove both edges) \\ 
+\hline
+(1,0) & 1 (add $i\to j$) & 0 & 1 (reverse $j\to i$) & 1 (remove $j\to i$) \\ 
+\hline
+(0,1) & 1 (add $j\to i$) & 1 (reverse $i\to j$) & 0 & 1 (remove $i\to j$) \\ 
+\hline
+(1,1) & 1 (remove both edges) & 1 (add $j\to i$) & 1 (add $i\to j$) & 0 \\ 
+\hline
+\end{tabular}
+\end{table}
+\noindent
+To compare reconstruction accuracy across networks of different sizes, we define the normalized Structural Hamming distance by dividing the Structural Hamming distance by the total number of unordered pairs of vertices, including self-loops:
+\[
+\mathrm{SHD}_{\mathrm{norm}} = \frac{\mathrm{SHD}}{\frac{n(n-1)}{2} + n},
+\]
+where $n$ is the number of vertices in the network.\newline\newline
+Justification: the normalized Structural Hamming distance measures the fraction of unordered pairs of vertices $(i, j)$ for which the interaction in the reconstructed network differs from the interaction in the ground truth network.
 \subsection{Results with respect to the characteristics of the datasets and the scoring functions used}
+TODO: Plots
 
 \section{Here something about part II - I'm not sure what titles are suitable}
 TODO: Please change the title of this section and maybe create several sections if needed
