@@ -150,6 +150,28 @@ def structural_hamming_distance(A, B):
 
     return shd
 
+def compute_metrics(gt_adj, pred_adj):
+    """
+    Compute all metrics and normalized fractions.
+    """
+    n = gt_adj.shape[0]
+
+    hd = hamming_distance(gt_adj, pred_adj)
+    shd = structural_hamming_distance(gt_adj, pred_adj)
+
+    prec = precision(gt_adj, pred_adj)
+    rec = recall(gt_adj, pred_adj)
+    f1 = f1_score(gt_adj, pred_adj)
+
+    # Normalizations
+    hd_frac = float(hd) / gt_adj.size
+
+    num_pairs = n * (n - 1) // 2
+    total_shd_entries = num_pairs + n
+    shd_frac = float(shd) / total_shd_entries
+
+    return hd_frac, shd_frac, prec, rec, f1
+
 ########################## Helper functions ###################################
 
 def adjacency_matrix_from_boolean_network(network):
@@ -250,40 +272,19 @@ def main(ground_truth_file, test_file):
     """
     
     gt_adj = adjacency_matrix_from_file(ground_truth_file)
+    pred_adj = adjacency_matrix_from_sif(test_file, ground_truth_file)
+
     print("Ground truth adjacency matrix:")
     print(gt_adj)
+    print("Predicted adjacency matrix:")
+    print(pred_adj)
 
-    test_adj = adjacency_matrix_from_sif(test_file, ground_truth_file)
-    print("Test adjacency matrix:")
-    print(test_adj)
+    hd_f, shd_f, p, r, f1 = compute_metrics(gt_adj, pred_adj)
 
-    hd = hamming_distance(gt_adj, test_adj)
-    shd = structural_hamming_distance(gt_adj, test_adj)
-    prec = precision(gt_adj, test_adj)
-    rec = recall(gt_adj, test_adj)
-    f1 = f1_score(gt_adj, test_adj)
-
-    
-    n_elements = gt_adj.size  # total number of entries in the adjacency matrix
-    n = gt_adj.shape[0]
-    
-    # Total unordered pairs excluding self-loops
-    num_pairs = n * (n - 1) // 2  
-    # Self-loops separately
-    num_self_loops = n
-    total_shd_entries = num_pairs + num_self_loops
-    
-    # Hamming distance
-    hd_fraction = float(hd) / n_elements
-    print("Hamming distance: " + str(hd) + " / " + str(n_elements) + " (fraction: {:.6f})".format(hd_fraction))
-
-    # Structural Hamming distance
-    shd_fraction = float(shd) / total_shd_entries
-    print("Structural Hamming distance: " + str(shd) + " / " + str(total_shd_entries) + " (fraction: {:.6f})".format(shd_fraction))
-
-    # Precision, recall, F1
-    print("Precision: {:.6f}".format(prec))
-    print("Recall: {:.6f}".format(rec))
+    print("Hamming distance (fraction): {:.6f}".format(hd_f))
+    print("Structural Hamming distance (fraction): {:.6f}".format(shd_f))
+    print("Precision: {:.6f}".format(p))
+    print("Recall: {:.6f}".format(r))
     print("F1 score: {:.6f}".format(f1))
 
 if __name__ == "__main__":

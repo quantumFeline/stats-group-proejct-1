@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 import os
-import numpy as np
 
 from EvaluationMetrics import (
-    hamming_distance,
-    structural_hamming_distance,
-    precision,
-    recall,
-    f1_score,
+    compute_metrics,
     adjacency_matrix_from_file,
     adjacency_matrix_from_sif
 )
@@ -32,28 +27,6 @@ scores = ["MDL", "BDE"]
 def ensure_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
-
-def compute_metrics(gt_adj, pred_adj):
-    """
-    Compute all metrics and normalized fractions.
-    """
-    n = gt_adj.shape[0]
-
-    hd = hamming_distance(gt_adj, pred_adj)
-    shd = structural_hamming_distance(gt_adj, pred_adj)
-
-    prec = precision(gt_adj, pred_adj)
-    rec = recall(gt_adj, pred_adj)
-    f1 = f1_score(gt_adj, pred_adj)
-
-    # Normalizations
-    hd_frac = float(hd) / gt_adj.size
-
-    num_pairs = n * (n - 1) // 2
-    total_shd_entries = num_pairs + n
-    shd_frac = float(shd) / total_shd_entries
-
-    return hd_frac, shd_frac, prec, rec, f1
 
 def main():
     ensure_dir(TABLES_DIR)
