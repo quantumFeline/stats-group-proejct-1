@@ -76,7 +76,7 @@ def generate_long_trajectories(network, state_info, max_length=1000, mode='synch
     print("Generated %d long trajectories" % len(trajectories))
     return trajectories
 
-def sample_dataset_from_long_trajectories_unique(
+def sample_dataset_from_long_trajectories(
     long_trajectories,
     state_info,
     mode,
