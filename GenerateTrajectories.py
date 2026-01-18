@@ -76,7 +76,7 @@ def generate_long_trajectories(network, state_info, max_length=1000, mode='synch
     print("Generated %d long trajectories" % len(trajectories))
     return trajectories
 
-def sample_dataset_from_long_trajectories(
+def sample_dataset_from_long_trajectories_unique(
     long_trajectories,
     state_info,
     mode,
@@ -86,14 +86,10 @@ def sample_dataset_from_long_trajectories(
     sampling_frequency=1
 ):
     """
-    Sample dataset fragments from pre-generated long trajectories.
+    Sample unique dataset fragments from pre-generated long trajectories.
 
-    Logic:
-    - For each trajectory, try all offsets 0...sampling_frequency-1
-    - Take the trajectory going in steps `sampling_frequency` from the offset to the end
-    - Check if it contains enough transient and attractor states
-    - If yes, candidate is accepted
-    - Later, deterministically cut last required_transient transient states and first required_attractor attractor states
+    Ensures all returned fragments are unique. Returns None if not enough candidates
+    or not enough unique fragments are available.
 
     :param long_trajectories: list of dicts, each with 'trajectory', 'transient_count', 'attractor_count'
     :param state_info: dict {state_int: {...}} from StateSpaceAnalyzer or AsyncAnalyzerNX
@@ -102,25 +98,20 @@ def sample_dataset_from_long_trajectories(
     :param trajectory_length: length of each trajectory
     :param transient_fraction: desired fraction of transient states (0..1)
     :param sampling_frequency: sampling step between states in the fragment
-    :return: list of sampled trajectories (lists of state_int)
+    :return: list of sampled trajectories (lists of state_int) or None if not enough candidates
     """
-
-    # -----------------------------
-    # Identify attractor states
-    # -----------------------------
     attractor_states = collect_attractor_states(state_info, mode)
 
     required_transient = int(round(transient_fraction * trajectory_length))
     required_attractor = trajectory_length - required_transient
 
     # -----------------------------
-    # Build candidate pairs (traj, offset)
+    # Build candidate fragments
     # -----------------------------
     candidates = []
     for traj_dict in long_trajectories:
         traj = traj_dict['trajectory']
         for offset in range(sampling_frequency):
-            # Take fragment from offset to end with sampling frequency
             fragment = traj[offset::sampling_frequency]
 
             transient_count = sum(1 for s in fragment if s not in attractor_states)
@@ -130,36 +121,49 @@ def sample_dataset_from_long_trajectories(
                 candidates.append((traj, offset))
 
     if len(candidates) < num_trajectories:
-        print("WARNING: Not enough candidate fragments available (requested {}, found {})".format(
+        print("Not enough candidate fragments (requested {}, found {})".format(
             num_trajectories, len(candidates)
         ))
         return None
 
     # -----------------------------
-    # Sample from candidates
+    # Sample unique fragments
     # -----------------------------
-    sampled_pairs = random.sample(candidates, min(num_trajectories, len(candidates)))
+    sampled_fragments_set = set()
     sampled_trajectories = []
 
-    for traj, offset in sampled_pairs:
+    random.shuffle(candidates)
+
+    for traj, offset in candidates:
+        if len(sampled_trajectories) >= num_trajectories:
+            break
+
         fragment = traj[offset::sampling_frequency]
 
-        # Positions of transient and attractor states in the fragment
         transient_positions = [i for i, s in enumerate(fragment) if s not in attractor_states]
         attractor_positions = [i for i, s in enumerate(fragment) if s in attractor_states]
 
-        # Deterministically take last required_transient transient states
+        # last required_transient transient states, first required_attractor attractor states
         selected_transient_indices = transient_positions[-required_transient:]
-        # Deterministically take first required_attractor attractor states
         selected_attractor_indices = attractor_positions[:required_attractor]
 
-        # Merge and sort by original order
-        final_indices = sorted(selected_transient_indices + selected_attractor_indices)
-        final_fragment = [fragment[i] for i in final_indices]
+        final_fragment = tuple(fragment[i] for i in selected_transient_indices + selected_attractor_indices)
 
-        sampled_trajectories.append(final_fragment)
+        if final_fragment not in sampled_fragments_set:
+            sampled_fragments_set.add(final_fragment)
+            sampled_trajectories.append(list(final_fragment))
+
+    # -----------------------------
+    # Check if enough unique fragments were sampled
+    # -----------------------------
+    if len(sampled_trajectories) < num_trajectories:
+        print("Not enough unique fragments (requested {}, found {})".format(
+            num_trajectories, len(sampled_trajectories)
+        ))
+        return None
 
     return sampled_trajectories
+
 
 def ensure_dirs():
     if not os.path.exists("ground_truth_networks"):
@@ -216,9 +220,9 @@ def generate_and_sample_network(
 
         # Dataset parameters
         sampling_frequencies = [1, 2, 3]
-        num_trajectories_list = [1, 2, 3]
-        trajectory_lengths = [5, 10, 15, 20]
-        transient_fractions = [2.0/5, 3.0/5, 4.0/5]
+        num_trajectories_list = [ i for i in range(3,40,3)]
+        trajectory_lengths = [ i for i in range(3,40,3)]
+        transient_fractions = [1.0/5, 2.0/5, 3.0/5, 4.0/5]
 
         for sample_frequency, n_traj, traj_len, transient_fraction in product(
             sampling_frequencies,
@@ -251,10 +255,11 @@ def generate_and_sample_network(
 
 
 if __name__ == "__main__":
-    for synchronicity_mode in ['synchronous', 'asynchronous']:
+    for num_nodes_in_network in range(5, 17):
         print("\n===============================================")
-        print("Mode:", synchronicity_mode)
+        print("Boolean network with {} nodes".format(num_nodes_in_network))
         print("===============================================")
-        for num_nodes_in_network in range(5, 17):
-            print("\n--- Boolean network with {} nodes ---".format(num_nodes_in_network))
-            generate_and_sample_network(num_nodes=num_nodes_in_network, max_length=100)
+        generate_and_sample_network(
+            num_nodes=num_nodes_in_network,
+            max_length=300
+        )

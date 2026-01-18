@@ -32,18 +32,88 @@
 TODO: I think that here we should have a description of BooleanNetworks.py
 
 \section{Attractor detection implementation}
+
+One of the \textbf{key characteristics of a dataset} generated from a Boolean network is the \textbf{proportion of transient and attractor states} present in the observed trajectories. Since this proportion is explicitly investigated in the project, it is necessary to \textbf{identify attractors in the state space} of each generated network.
+
+To enable control over this characteristic, dedicated classes were implemented that, for a given Boolean network, classify each possible network state either as an attractor state or as a transient state, based on the structure of the state transition graph.
+
+\textbf{The attractor detection strategy depends on the network update mode}, as the structure of the state transition graph differs between synchronous and asynchronous update schemes. The following subsections describe the approaches used for attractor identification under synchronous and asynchronous dynamics.
+
 \subsection{Attractors in synchronous mode}
+The implementation of the \texttt{StateSpaceAnalyzer} class can be found in the \texttt{StateSpaceAnalysisSynchronous.py} file.\newline
+
+For each Boolean network, a \textbf{dictionary} is created that stores \textbf{information for every possible network state}. Specifically, for each state, it is recorded whether the state \textbf{belongs to an attractor}, the \textbf{identifier of the corresponding attractor}, and the \textbf{distance of the state to the attractor} (with distance 0 for attractor states).\newline
+
+The algorithm uses the fact that \textbf{trajectories in synchronous Boolean networks are deterministic}: the next state of the network is uniquely determined by its current state. Starting from each state that has not yet been analyzed, the network is iteratively updated following its synchronous dynamics until one of two situations occurs:
+\begin{enumerate}
+    \item The trajectory reaches a state that \textbf{has already been visited within the current path}. In this case, a \textbf{cycle} (possibly consisting of a single state) has been detected, corresponding to a \textbf{new attractor}. All states in the cycle are marked as attractor states, and transient states leading to the cycle are assigned the corresponding attractor ID along with their distance to the attractor.
+    \item The trajectory reaches a state that \textbf{has already been analyzed in a previous trajectory}. In this case, the previously computed attractor information is propagated backward along the current path, assigning attractor IDs and distances to all transient states in the path.
+\end{enumerate}
+
+This approach ensures that \textbf{each state in the network is analyzed exactly once}, and that all attractors and their basins of attraction are correctly identified.\newline
+
+The distance from a transient state to its attractor is computed during the analysis. This information was originally intended to support a specific dataset generation strategy, but the approach to dataset generation has since changed. Nevertheless, the class retains the distance computation functionality, as it does not increase the computational cost and could potentially be used in alternative dataset generation strategies.
+
 \subsection{Attractors in asynchronous mode}
+Two versions of attractor detection in asynchronous mode were implemented.\newline
+The helper class \texttt{AsyncAnalyzer} is provided in the \texttt{AttractorAsynchronous.py} file.\newline
+To detect attractors in the state transition graph under asynchronous dynamics, the \texttt{analyze} method can be used either from the \texttt{AsyncAnalyzerNX} class, located in \texttt{AttractorsAsynchronousNetworkx.py}, or from the \texttt{AsyncAnalyzerTarjan} class, located in \texttt{AttractorsAsynchronousTarjan.py}.\newline
+
+In asynchronous state transition system, the next state of the network is \textbf{not uniquely determined} by the current state, because only a single node is updated at a time and the choice of node is random. Consequently, the state transition graph can have multiple outgoing edges from a single state. In this situation, attractors are defined as \textbf{strongly connected components (SCCs) without outgoing edges}, meaning that each state in the component can reach every other state in the component, and no transitions leave the component. Identifying SCCs in the graph allows us to detect all asynchronous attractors and their basins of attraction.\newline
+
+The goal of the analysis is to assign \textbf{to each state of the network} whether it is an attractor or a transient state, and if it is an attractor, to assign the \textbf{identifier of the corresponding attractor}.\newline
+
+The two implemented approaches differ in the method used to find these SCCs:
+
+\begin{enumerate}
+    \item \textbf{NetworkX-based approach (\texttt{AsyncAnalyzerNX}):}  
+    This approach constructs the full asynchronous state transition graph using the NetworkX library. Strongly connected components are computed with NetworkX's built-in algorithms. SCCs that have no outgoing edges are identified as attractors, and all other states are marked as transient. Each attractor state is assigned an attractor ID.
+
+    \item \textbf{Tarjan-based approach (\texttt{AsyncAnalyzerTarjan}):}  
+    This approach implements \textbf{Tarjan's algorithm} for finding strongly connected components directly, without relying on external libraries. Each SCC is checked for outgoing edges, and those without outgoing edges are classified as attractors. Transient states are marked accordingly. Each attractor state is assigned an attractor ID.
+\end{enumerate}
+
+In this project, we use the \texttt{AsyncAnalyzerNX} class. Since the NetworkX library was introduced during the course, we consider its use appropriate for this analysis.
 
 \section{Datasets generation}
 
 \subsection{The way of generating a dataset with given characteristics}
 
+The dataset generation process is implemented in \texttt{GenerateTrajectories.py}. For each network size $n$ in the range from 5 to 16, a Boolean network is created. For each network and for each update mode (synchronous or asynchronous), the following tasks are performed:
+
+\begin{enumerate}
+    \item \textbf{State space analysis:} The full state space of the Boolean network is analyzed to identify attractor and transient states. In synchronous mode, the \texttt{StateSpaceAnalyzer} class is used, while in asynchronous mode, the \texttt{AsyncAnalyzerNX} class is employed.
+
+    \item \textbf{Long trajectories generation:} From every possible initial state of the network, a long trajectory of states is generated by iteratively applying the network update rules. In total, $2^n$ trajectories of length 300 are generated, providing a base from which shorter dataset fragments can later be sampled.
+
+    \item \textbf{Loop:} For each combination of dataset parameters (number of trajectories, trajectory length, sampling frequency and transient fraction) the sampling process is applied to create dataset fragments with the requested characteristics.
+    \begin{itemize}
+
+    \item \textbf{Fragment candidate identification:} For each long trajectory, multiple candidate fragments are considered by varying the starting offset (from 0 to \texttt{sampling\_frequency}-1) and applying the user-defined sampling frequency. Each candidate fragment is checked to ensure it contains at least the required number of transient states and attractor states according to the desired fraction. Only fragments meeting these criteria are retained as candidates.
+
+    \item \textbf{Fragment shuffling, trimming, and uniqueness check:} Candidate fragments are first randomly shuffled. Then, for each candidate, if the dataset has not yet reached the desired number of trajectories, a fragment is selected by taking every \texttt{sampling\_frequency}-th state and deterministically picking the last required transient states and the first required attractor states. This ensures that each fragment has the desired length and maintains the intended proportion of transient to attractor states. After trimming, each fragment is represented as a tuple and checked against already selected fragments. If the fragment is already included, it is skipped. This process guarantees that all trajectories in the final dataset are distinct and that the dataset contains the requested number of trajectories.
+
+    \item \textbf{Insufficient candidate handling:} If at any stage there are not enough fragments to satisfy the requested number of trajectories - either because the number of candidate fragments before trimming is too small, or because there are not enough unique fragments after trimming - the sampling function returns \texttt{None}. This guarantees that no dataset is created with fewer trajectories than requested.
+    \end{itemize}
+\end{enumerate}
+
 \subsection{Description of the datasets generated}
+
+\begin{itemize}
+    \item \textbf{Network size ($n$):} The number of nodes in the Boolean network, ranging from 5 to 16. For each $n$, a separate Boolean network is created.
+    \item \textbf{Number of data points:} 13 values ranging from 3 to 39 (step size of 3).
+    \item \textbf{Trajectory length:} 13 values ranging from 3 to 39 (step size of 3).
+    \item \textbf{Update mode:} Synchronous and Asynchronous.
+    \item \textbf{Sampling frequency:} 1, 2, and 3.
+\end{itemize}
+
+In some cases, it was not possible to generate a dataset with the requested characteristics. This typically occurred for small networks (small $n$) and synchronous update mode, where the combination of a long required trajectory length and a high transient fraction made it impossible to find enough trajectory fragments that satisfied the criteria. In such cases, the dataset generation function returned \texttt{None} and no dataset was created for that parameter combination.
 
 \section{BNFinder2 usage}
 
 BNFinder2 was used to reconstruct networks from generated datasets (trajectories). Since the tool relies on the deprecated Python 2.7 and specific libraries (Scipy, FPConst), an isolated Conda environment was established to resolve dependency conflicts.
+
+The execution of BNFinder2 on datasets derived from synthetic networks is implemented in the \texttt{RunBnfExperiments.py} script.
 
 \section{Evaluation of the accuracy of the reconstructed network}
 
@@ -52,7 +122,9 @@ BNFinder2 was used to reconstruct networks from generated datasets (trajectories
 Boolean networks are directed graphs. To compute evaluation metrics, we represent the networks using adjacency matrices, where 
 $A[i, j] = 1$ if and only if there is a directed edge from $x_i$ to $x_j$, and $A[i, j] = 0$ otherwise.\newline\newline
 The accuracy of the reconstructed networks is assessed using five measures: recall, precision, F1-score, normalized Hamming distance and normalized Structural Hamming distance. Ideally, recall, precision, and F1-score should be high, whereas the normalized Hamming and Structural Hamming distances should be low.\newline\newline
-All functions for computing metrics from adjacency matrices, as well as for generating adjacency matrices from ground truth files or SIF files (outputs of BNFinder), are implemented in the file \texttt{EvaluationMetrics.py}.\newline\newline
+All functions for computing metrics from adjacency matrices, as well as for generating adjacency matrices from ground truth files or SIF files (outputs of BNFinder), are implemented in the file \texttt{EvaluationMetrics.py}.\newline
+The evaluation of BNFinder results on datasets generated from synthetic networks is implemented in \texttt{EvaluateAllBnfResults.py}.\newline\newline
+
 {\large \textbf{Description of metrices and justification of choice}}\newline\newline
 \noindent
 We define the basic quantities as follows:
@@ -180,9 +252,12 @@ Authors (given in alphabetical order) and their contributions to the project:
 \begin{itemize}
     \item Czapiewska Magdalena:
     \begin{itemize}
-        \item mmm
-        \item mmm
-    \end{itemize}
+    \item Implementing attractor detection in the state space for synchronous update mode
+    \item Implementing attractor detection in the state space for asynchronous update mode (two approaches)
+    \item Implementing functions for generating datasets, taking into account update mode, number of data points, trajectory length, sampling frequency and fraction of transient states; implementing a script for generating datasets for synthetic networks
+    \item Implementing a script to run BNFinder2 on datasets derived from synthetic networks
+    \item Choosing, describing and implementing evaluation metrics; creating a script for evaluating BNFinder2 results
+\end{itemize}
     \item Khodina Anastasiya(whole Part 2):
     \begin{itemize}
         \item Choosing appropriate model in Part 2
