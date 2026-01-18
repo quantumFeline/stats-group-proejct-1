@@ -18,7 +18,7 @@
 \usepackage{float}
 
 \title{Statistical Data Analysis 2 - Final Project - Report}
-\author{Czapiewska Magdalena, Khodina Anastasiya, Nachaieva Veronika, Znamierowski Mikołaj}
+\author{Czapiewska Magdalena, Khodzina Anastasiya, Nachaieva Veronika, Znamierowski Mikołaj}
 
 \begin{document}
 
@@ -42,6 +42,8 @@ TODO: I think that here we should have a description of BooleanNetworks.py
 \subsection{Description of the datasets generated}
 
 \section{BNFinder2 usage}
+
+BNFinder2 was used to reconstruct networks from generated datasets (trajectories). Since the tool relies on the deprecated Python 2.7 and specific libraries (Scipy, FPConst), an isolated Conda environment was established to resolve dependency conflicts.
 
 \section{Evaluation of the accuracy of the reconstructed network}
 
@@ -132,8 +134,43 @@ Justification: the normalized Structural Hamming distance measures the fraction 
 \subsection{Results with respect to the characteristics of the datasets and the scoring functions used}
 TODO: Plots
 
-\section{Here something about part II - I'm not sure what titles are suitable}
-TODO: Please change the title of this section and maybe create several sections if needed
+\section{Reconstructing the model of a real-life biological mechanism}
+\subsection{Chosen Model}
+MIR-9-NEUROGENESIS  with ID = 88 Boolean Network model was chosen from Biodivine repository, because it has small number of nodes(6), which reduces computational complexity and should give better accuracy, and has zero inputs, which eliminates the need to simulate external environmental changes, allowing for a straightforward simulation of the network's internal dynamics. Below you can see graph for MIR9 model where yellow nodes are attractors.
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Figure_model_MIR9.png}
+    \label{fig:MIR9}
+\end{figure}
+
+Variables: $V = \{x_0, x_1, x_2, x_3, x_4, x_5\}$
+
+Predictor functions: $f_0(x_2) = x_2$
+
+$f_1(x_3, x_5) = (\neg x_3 \land x_5) \lor x_3$  (equivalent to $x_3 \lor x_5$)
+
+$f_2(x_1, x_4) = \neg x_4 \land \neg x_1$
+
+$f_3(x_0, x_4) = \neg x_4 \land \neg x_0$
+
+$f_4(x_0, x_3) = \neg x_3 \land \neg x_0$
+
+$f_5(x_0, x_4) = \neg x_4 \land \neg x_0$
+
+\subsection{Datasets Generation}
+A total of 1014 datasets were generated to assess the algorithm's robustness. The datasets covered a combination of the following parameters:
+\begin{itemize}
+    \item \textbf{Number of data points:} 13 values ranging from 3 to 39 (step size of 3).
+    \item \textbf{Trajectory length:} 13 values ranging from 3 to 39.
+    \item \textbf{Update mode:} Synchronous and Asynchronous.
+    \item \textbf{Sampling frequency:} 1, 2, and 3.
+    \item \textbf{Initialization:} Random starting state for all simulations.
+\end{itemize}
+The total number of combinations is calculated as $13 \times 13 \times 2 \times 3 = 1014$ datasets.
+
+\subsection{Reconstructing}
+The next step was to reconstruct Bayesian Network with MDL scoring function, which was chosen based on the insights from the first Part.
+To fully automate the reconstruction process and evaluation, a custom Python script was developed. This allowed for the batch processing of all 1014 datasets and the automatic calculation of all metrics defined in Part 1, eliminating the need for manual intervention.
 
 \section{Conclusions drawn from experiments}
 
@@ -146,10 +183,15 @@ Authors (given in alphabetical order) and their contributions to the project:
         \item mmm
         \item mmm
     \end{itemize}
-    \item Khodina Anastasiya:
+    \item Khodina Anastasiya(whole Part 2):
     \begin{itemize}
-        \item mmm
-        \item mmm
+        \item Choosing appropriate model in Part 2
+        \item Interpreting/Processing chosen model code
+        \item Creating inference of BN class for the model
+        \item Generating trajectories for the model
+        \item Reconstructing the BN from created trajectories
+        \item Calculating metrics for the model reconstruction from Part 2
+        \item Creating graphical representation for the model
     \end{itemize}
     \item Nechaieva Veronika:
     \begin{itemize}
