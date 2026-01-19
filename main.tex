@@ -29,7 +29,79 @@
 % You should prepare and submit a comprehensive report describing your experimental setup, the datasets generated, and the results obtained. The report should include the specifications of all Boolean networks considered in your study, along with the corresponding input files containing the simulated datasets provided to BNFinder2. It should justify all methodological choices made and present the results both in written form and through appropriate graphical representations. Finally, the conclusions drawn from your experiments should be clearly articulated.
 
 \section{Boolean Network representation and construction}
-TODO: I think that here we should have a description of BooleanNetworks.py
+
+In this section we describe the implementation of the code handling Boolean networks. We divide it into four subsections for better readability.
+
+\subsection{Creation of the network}
+
+Each Boolean network is initiated with specified number of nodes, as, according to the project's description, everything else should be randomized. 
+However, since part II requires the usage of a specific model, we also provide an additional option to specify the transitions (this also gives us a possibility to run more tests on previously created networks, if needed). 
+The main usage of this feature is present in loading the networks from files, which will be described later. 
+If no transitions are specified, the model creates them randomly, with at most $3$ parent nodes for each node. 
+The concrete representation of transitions (along with some theoretical issues concerning it) and the method of their creation can be found in the following subsection.
+
+\subsection{Transitions}
+
+Theoretically, each transition has a form of a logical formula (with negations, conjunctions and disjunctions) with nodes as boolean variables. 
+However, each such formula can be rewritten in multiple ways, without changing the output. 
+For example, the famous De Morgan's law states that $\neg (x_1 \wedge x_2)$ is equivalent to $\neg x_1 \vee \neg x_2$. 
+To standardize this, the Conjunctive Normal Form (CNF) or the Disjunctive Normal Form (DNF) can be used. 
+This however proves quite problematic to implement when creating a random \textbf{unbiased} logical formula (i.e. each transition can be achieved with equal probability). 
+While implementing it, one can also easily run into problems similar to SAT, which are NP-hard.
+
+To address the above issues, the code uses a binary representation of the transitions (in particular, it avoids all logical formulas). 
+Namely: each transition is a tuple of two lists. The first is a list of (non-repeating) parents of length $n$ (where $0 \leq n \leq 3$ is chosen randomly). 
+The second one is a random binary sequence of length $2^n$. It represents the transition in the following format: if the last parent is zero, we look at the first half of the sequence, otherwise, on the second half. 
+We repeat it for all parents (from last to first), reducing our sequence to one element, which is the outcome of the transition. 
+This way, all transitions are reachable, and \textbf{equally probable} (for given $n$), thus giving the most general networks.
+
+To illustrate it with an example: suppose that the node $x_2$ has parents $x_3, x_4, x_0$ and the transition is $[0, 1, 0, 1, 1, 0, 1, 1]$. 
+This means that the transition is described by the following table:
+
+\[
+\begin{array}{|ccc|c|}
+\hline
+x_3 & x_4 & x_0 & x_2 \\
+\hline
+0 & 0 & 0 & 0 \\
+1 & 0 & 0 & 1 \\
+0 & 1 & 0 & 0 \\
+1 & 1 & 0 & 1 \\
+0 & 0 & 1 & 1 \\
+1 & 0 & 1 & 0 \\
+0 & 1 & 1 & 1 \\
+1 & 1 & 1 & 1 \\
+\hline
+\end{array}
+\]
+
+It's worth noting here, that if the node has no parents, by the above implementation, its transition vector has $2^0 = 1$ element. 
+However, we don't want to overwrite it with that value, so, when updating the state, its transitions are always skipped (the actual transition applied to it is the identity).
+
+\subsection{Saving and loading the network}
+
+After creating the network, its structure (i.e. the number of nodes and the transitions) is saved to a file for later reference (which is crucial for the following parts). 
+The format used is the following:
+\begin{itemize}
+    \item first line of the file is a single integer defining the number of nodes;
+    \item each of the next lines defines a transition in the format \verb|[list of parents]; [transition]| (separated with comas) for the corresponding node.
+\end{itemize}
+A file with such format can be then loaded into the program, which allows for using custom Boolean networks, not just the random ones.
+
+\subsection{Creating and saving the datasets}
+
+After the creation of our model, we can create datasets by running a single command. With it, we can specify:
+\begin{itemize}
+    \item the number of datapoints (i.e. transitions) in the dataset;
+    \item the length of all trajectories in the dataset;
+    \item if the transitions should be applied synchronously or not;
+    \item the sampling frequency;
+    \item the starting states for the trajectories (with an option of specifying all, only a few, or none - the rest are filled with random states).
+\end{itemize}
+
+The datasets created this way can be then saved to a file of format compatible with BNFinder2, for later inference.
+
+
 
 \section{Attractor detection implementation}
 
@@ -279,11 +351,12 @@ Authors (given in alphabetical order) and their contributions to the project:
     \end{itemize}
     \item Znamierowski Mikołaj:
     \begin{itemize}
+        \item Gathering the group and initiating the work.
         \item Finding and sharing crucial resources regarding BNFinder2.
-        \item Initiating the work.
-        \item Implementing the code for Boolean network: setting proper structure, functionalities, transitions, etc.
-        \item Implementing functions that create the datasets and save them in a proper format for BNFinder2.
+        \item Implementing the main code for Boolean network class: setting proper structure, functionalities, transitions, etc.
+        \item Implementing functions that create the datasets and save them in a file.
         \item Explaining to the rest of the group how to use the code.
+        \item Describing the most important parts of the above implementations in the report (i.e. writing the first section).
     \end{itemize}
 \end{itemize}
 
