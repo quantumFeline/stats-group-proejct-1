@@ -15,9 +15,9 @@ RESULTS_DIR = "results"
 TABLES_DIR = "tables"
 
 SAMPLING_FREQUENCIES = [1, 2, 3]
-N_TRAJECTORIES_LIST = [1, 2, 3]
-TRAJECTORY_LENGTHS = [5, 10, 15, 20]
-TRANSIENT_FRACTIONS = [2.0 / 5, 3.0 / 5, 4.0 / 5]
+N_TRAJECTORIES_LIST = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39]
+TRAJECTORY_LENGTHS = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39]
+TRANSIENT_FRACTIONS = [1.0 / 5, 2.0 / 5, 3.0 / 5, 4.0 / 5]
 
 modes = ["synchronous", "asynchronous"]
 scores = ["MDL", "BDE"]
