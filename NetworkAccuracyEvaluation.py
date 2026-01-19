@@ -4,152 +4,121 @@ import seaborn as sns
 import numpy as np
 
 sns.set_style("whitegrid")
-plt.rcParams['figure.figsize'] = (12, 8)
+plt.rcParams['figure.figsize'] = (10, 6)
 plt.rcParams['font.size'] = 10
 
 
 def load_mir9_data(filepath):
-    """Load and clean the MIR9 CSV data."""
+    """Load MIR9 CSV data."""
     df = pd.read_csv(filepath, sep=';')
-    # Convert to proper float
     df['freq'] = df['freq'].str.replace(',', '.').astype(float)
     return df
 
 
 def load_tsv_data(filepath):
-    """Load and clean the TSV data."""
+    """Load TSV data."""
     df = pd.read_csv(filepath, sep='\t')
     df = df.replace('NA', np.nan)
-
-    # Convert numeric columns
     numeric_cols = ['hd_frac', 'shd_frac', 'precision', 'recall', 'f1']
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
-
     return df
 
 
-
-def plot_vs_nodes(df, metrics='f1', nodes_col='nodes', title_prefix='', save_path=None):
+def filter_data(df, **conditions):
     """
-    Plot F1 score as a function of number of nodes in the Bayesian network.
-    Specific to TSV data.
+    Filter dataframe by exact conditions.
+
+    Example:
+        filter_data(df, ntraj=3, len=20, score='MDL')
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    plot_data = df.dropna(subset=[metrics])
-    grouped = plot_data.groupby(nodes_col)[metrics].agg(['mean', 'std', 'count']).reset_index()
-
-    ax.errorbar(grouped[nodes_col], grouped['mean'], yerr=grouped['std'],
-                marker='o', linewidth=2, capsize=5, capthick=2,
-                label='Mean {} (n={} samples)'.format(metrics, grouped["count"].sum()))
-
-    ax.set_xlabel('Number of Nodes')
-    ax.set_ylabel('{} Score'.format(metrics))
-    ax.set_title('{}{} Score vs Number of Nodes in Bayesian Network'.format(title_prefix, metrics))
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    plt.tight_layout()
-    return fig
+    result = df.copy()
+    for col, val in conditions.items():
+        if col in result.columns:
+            result = result[result[col] == val]
+    return result
 
 
-def plot_vs_datapoints(df, mode_col='mode', datapoints_col='datapoints', metric='f1',
-                       title_prefix='', save_path=None):
+def filter_data(df, **conditions):
     """
-    Plot score as a function of number of datapoints/trajectories.
+    Filter dataframe by exact conditions.
+
+    Example:
+        filter_data(df, ntraj=3, len=20, score='MDL')
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    # Get unique modes
-    modes = df[mode_col].unique()
-
-    for mode in modes:
-        mode_data = df[df[mode_col] == mode].copy()
-
-        grouped = mode_data.groupby(datapoints_col)[metric].agg(['mean', 'std']).reset_index()
-
-        ax.plot(grouped[datapoints_col], grouped['mean'],
-                marker='o', label='{}'.format(mode), linewidth=2)
-        ax.fill_between(grouped[datapoints_col],
-                        grouped['mean'] - grouped['std'],
-                        grouped['mean'] + grouped['std'],
-                        alpha=0.2)
-
-    ax.set_xlabel('Number of Trajectories')
-    ax.set_ylabel('{} Score'.format(metric))
-    ax.set_title('{}{} Score vs Number of Trajectories'.format(title_prefix, metric))
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    plt.tight_layout()
-    return fig
+    result = df.copy()
+    for col, val in conditions.items():
+        if col in result.columns:
+            result = result[result[col] == val]
+    return result
 
 
-def plot_vs_trajectory_length(df, mode_col='mode', length_col='trajectory_len', metric='f1',
-                              title_prefix='', save_path=None):
-    """Plot score as a function of trajectory length."""
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    modes = df[mode_col].unique()
-
-    for mode in modes:
-        mode_data = df[df[mode_col] == mode].copy()
-        grouped = mode_data.groupby(length_col)[metric].agg(['mean', 'std']).reset_index()
-
-        ax.plot(grouped[length_col], grouped['mean'],
-                marker='s', label='{}'.format(mode), linewidth=2)
-        ax.fill_between(grouped[length_col],
-                        grouped['mean'] - grouped['std'],
-                        grouped['mean'] + grouped['std'],
-                        alpha=0.2)
-
-    ax.set_xlabel('Trajectory Length')
-    ax.set_ylabel('{} Score'.format(metric))
-    ax.set_title('{}{} Score vs Trajectory Length'.format(title_prefix, metric))
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    plt.tight_layout()
-    return fig
-
-
-def plot_metrics_heatmap(df, x_col, y_col, metric='f1', mode_filter=None,
-                         title_prefix='', save_path=None):
+def plot_metric_vs_param(df, x_col, metric='f1', split_by=None,
+                         title=None, save_path=None):
     """
-    Create a heatmap showing a metric as a function of two parameters.
+    Plot metric vs a single parameter, optionally split by another variable.
+    Only uses data where all other parameters match - no aggregation.
 
     Parameters:
     -----------
     df : DataFrame
+        Already filtered to comparable conditions
     x_col : str
-        Column name for x-axis
-    y_col : str
-        Column name for y-axis
+        Parameter to plot on x-axis (e.g., 'nodes', 'ntraj', 'len')
     metric : str
-        Metric to plot (f1, precision, recall, etc.)
-    mode_filter : str or None
-        If provided, filter data to this mode only
+        Metric to plot (e.g., 'f1', 'precision', 'shd_frac')
+    split_by : str or None
+        Column to create separate lines (e.g., 'score', 'mode')
     """
-    plot_data = df.copy()
-    if mode_filter:
-        plot_data = plot_data[plot_data['mode'] == mode_filter]
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Create pivot table
+    plot_data = df.dropna(subset=[metric])
+
+    if split_by and split_by in plot_data.columns:
+        for value in sorted(plot_data[split_by].unique()):
+            subset = plot_data[plot_data[split_by] == value]
+            grouped = subset.groupby(x_col)[metric].agg(['mean', 'std']).reset_index()
+
+            ax.plot(grouped[x_col], grouped['mean'],
+                    marker='o', label=str(value), linewidth=2)
+            ax.fill_between(grouped[x_col],
+                            grouped['mean'] - grouped['std'],
+                            grouped['mean'] + grouped['std'],
+                            alpha=0.2)
+    else:
+        grouped = plot_data.groupby(x_col)[metric].agg(['mean', 'std']).reset_index()
+        ax.plot(grouped[x_col], grouped['mean'], marker='o', linewidth=2)
+        ax.fill_between(grouped[x_col],
+                        grouped['mean'] - grouped['std'],
+                        grouped['mean'] + grouped['std'],
+                        alpha=0.2)
+
+    ax.set_xlabel(x_col)
+    ax.set_ylabel(metric)
+    ax.set_title(title or '{} vs {}'.format(metric, x_col))
+    if split_by:
+        ax.legend(title=split_by)
+    ax.grid(True, alpha=0.3)
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.tight_layout()
+    return fig
+
+
+def plot_heatmap(df, x_col, y_col, metric='f1', title=None, save_path=None):
+    """
+    Heatmap of metric vs two parameters.
+    df should already be filtered to comparable conditions.
+    """
+    plot_data = df.dropna(subset=[metric])
     pivot = plot_data.pivot_table(values=metric, index=y_col, columns=x_col, aggfunc='mean')
 
     fig, ax = plt.subplots(figsize=(10, 8))
     sns.heatmap(pivot, annot=True, fmt='.3f', cmap='viridis', ax=ax,
-                cbar_kws={'label': metric.upper()})
+                cbar_kws={'label': metric})
 
-    mode_str = ' ({})'.format(mode_filter) if mode_filter else ''
-    ax.set_title('{}{} Heatmap: {} vs {}{}'.format(title_prefix, metric.upper(), y_col, x_col, mode_str))
+    ax.set_title(title or '{}: {} vs {}'.format(metric, y_col, x_col))
     ax.set_xlabel(x_col)
     ax.set_ylabel(y_col)
 
@@ -159,31 +128,39 @@ def plot_metrics_heatmap(df, x_col, y_col, metric='f1', mode_filter=None,
     return fig
 
 
-def plot_vs_nodes_by_score(df, metric='f1', nodes_col='nodes', score_col='score',
-                           title_prefix='', save_path=None):
+def plot_precision_recall(df, color_by=None, title=None, save_path=None, col_names=None):
     """
-    Plot score vs nodes, separated by scoring function (MDL/BDE).
+    Precision-recall scatter plot.
+    Shows the trade-off between precision and recall.
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
+    precision, recall = col_names
+    plot_data = df.dropna(subset=[precision, recall])
 
-    plot_data = df.dropna(subset=[metric])
-    scores = plot_data[score_col].unique()
+    fig, ax = plt.subplots(figsize=(8, 8))
 
-    for score in scores:
-        score_data = plot_data[plot_data[score_col] == score]
-        grouped = score_data.groupby(nodes_col)[metric].agg(['mean', 'std']).reset_index()
+    if color_by and color_by in plot_data.columns:
+        # Categorical color
+        if plot_data[color_by].dtype == 'object' or len(plot_data[color_by].unique()) < 10:
+            for value in plot_data[color_by].unique():
+                subset = plot_data[plot_data[color_by] == value]
+                ax.scatter(subset[recall], subset[precision],
+                           label=str(value), alpha=0.6, s=50)
+            ax.legend(title=color_by)
+        else:
+            # Continuous color
+            scatter = ax.scatter(plot_data[recall], plot_data[precision],
+                                 c=plot_data[color_by], cmap='viridis',
+                                 alpha=0.6, s=50)
+            plt.colorbar(scatter, label=color_by)
+    else:
+        ax.scatter(plot_data[recall], plot_data[precision], alpha=0.6, s=50)
 
-        ax.plot(grouped[nodes_col], grouped['mean'],
-                marker='o', label='{}'.format(score), linewidth=2)
-        ax.fill_between(grouped[nodes_col],
-                        grouped['mean'] - grouped['std'],
-                        grouped['mean'] + grouped['std'],
-                        alpha=0.2)
-
-    ax.set_xlabel('Number of Nodes')
-    ax.set_ylabel('{} Score'.format(metric))
-    ax.set_title('{}{} Score vs Number of Nodes (by Scoring Function)'.format(title_prefix, metric))
-    ax.legend()
+    ax.plot([0, 1], [0, 1], 'k--', alpha=0.3, label='Random')
+    ax.set_xlabel('Recall')
+    ax.set_ylabel('Precision')
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_title(title or 'Precision vs Recall')
     ax.grid(True, alpha=0.3)
 
     if save_path:
@@ -192,69 +169,44 @@ def plot_vs_nodes_by_score(df, metric='f1', nodes_col='nodes', score_col='score'
     return fig
 
 
-def plot_metrics_comparison(df, group_by_col, metric_cols=None,
-                            title_prefix='', save_path=None):
+def plot_multiple_metrics(df, x_col, metrics, split_by=None, title=None, save_path=None):
     """
-    Create a grouped bar plot comparing multiple metrics across different groups.
+    Plot multiple metrics on the same graph vs one parameter.
+    Useful for comparing SHD, precision, recall, F1 simultaneously.
     """
-    if metric_cols is None:
-        metric_cols = ['prec', 'recall', 'f1']
-    plot_data = df.dropna(subset=metric_cols)
-    grouped = plot_data.groupby(group_by_col)[metric_cols].mean().reset_index()
+    n_metrics = len(metrics)
+    fig, axes = plt.subplots(n_metrics, 1, figsize=(10, 4 * n_metrics), sharex=True)
+    if n_metrics == 1:
+        axes = [axes]
 
-    fig, ax = plt.subplots(figsize=(14, 6))
+    for ax, metric in zip(axes, metrics):
+        plot_data = df.dropna(subset=[metric])
 
-    x = np.arange(len(grouped))
-    n_metrics = len(metric_cols)
-    # narrower bars for more metrics
-    width = 0.8 / n_metrics  # Total width of 0.8 per group, divided by number of metrics
+        if split_by and split_by in plot_data.columns:
+            for value in sorted(plot_data[split_by].unique()):
+                subset = plot_data[plot_data[split_by] == value]
+                grouped = subset.groupby(x_col)[metric].agg(['mean', 'std']).reset_index()
+                ax.plot(grouped[x_col], grouped['mean'],
+                        marker='o', label=str(value), linewidth=2)
+                ax.fill_between(grouped[x_col],
+                                grouped['mean'] - grouped['std'],
+                                grouped['mean'] + grouped['std'],
+                                alpha=0.2)
+        else:
+            grouped = plot_data.groupby(x_col)[metric].agg(['mean', 'std']).reset_index()
+            ax.plot(grouped[x_col], grouped['mean'], marker='o', linewidth=2)
+            ax.fill_between(grouped[x_col],
+                            grouped['mean'] - grouped['std'],
+                            grouped['mean'] + grouped['std'],
+                            alpha=0.2)
 
-    for i, metric in enumerate(metric_cols):
-        # Position bars side by side within each group
-        offset = (i - n_metrics / 2.0 + 0.5) * width
-        ax.bar(x + offset, grouped[metric], width, label=metric.upper())
+        ax.set_ylabel(metric)
+        ax.grid(True, alpha=0.3)
+        if split_by and ax == axes[0]:
+            ax.legend(title=split_by)
 
-    ax.set_xlabel(group_by_col)
-    ax.set_ylabel('Score')
-    ax.set_title('{}Comparison of Metrics by {}'.format(title_prefix, group_by_col))
-    ax.set_xticks(x)
-    ax.set_xticklabels(grouped[group_by_col])
-    ax.legend(loc='best')
-    ax.grid(True, alpha=0.3, axis='y')
-
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    plt.tight_layout()
-    return fig
-
-def plot_sync_vs_async_comparison(df, metric='f1', group_col='datapoints',
-                                  mode_col='mode', title_prefix='', save_path=None):
-    """
-    Direct comparison of synchronous vs asynchronous performance.
-    """
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    plot_data = df.dropna(subset=[metric])
-
-    # Assume modes are something like 'Sync'/'Async' or 'synchronous'/'asynchronous'
-    modes = plot_data[mode_col].unique()
-
-    for mode in modes:
-        mode_data = plot_data[plot_data[mode_col] == mode]
-        grouped = mode_data.groupby(group_col)[metric].agg(['mean', 'std']).reset_index()
-
-        ax.plot(grouped[group_col], grouped['mean'],
-                marker='o', label=mode, linewidth=2, markersize=8)
-        ax.fill_between(grouped[group_col],
-                        grouped['mean'] - grouped['std'],
-                        grouped['mean'] + grouped['std'],
-                        alpha=0.2)
-
-    ax.set_xlabel(group_col)
-    ax.set_ylabel(metric.upper())
-    ax.set_title('{}Synchronous vs Asynchronous: {} by {}'.format(title_prefix, metric.upper(), group_col))
-    ax.legend()
-    ax.grid(True, alpha=0.3)
+    axes[-1].set_xlabel(x_col)
+    axes[0].set_title(title or 'Multiple metrics vs {}'.format(x_col))
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -262,98 +214,161 @@ def plot_sync_vs_async_comparison(df, metric='f1', group_col='datapoints',
     return fig
 
 
-# Example usage function
-def generate_all_plots_mir9(csv_path, output_dir='plots_mir9'):
-    """Generate all relevant plots for MIR9 dataset."""
+def plot_faceted_heatmaps(df, x_col, y_col, metric, facet_by, values=None,
+                          title=None, save_path=None):
+    """
+    Create grid of heatmaps, one for each value of facet_by parameter.
 
+    Example:
+        plot_faceted_heatmaps(df, 'ntraj', 'len', 'f1',
+                             facet_by='nodes', values=[5, 8, 12, 16])
+    """
+    if values is None:
+        values = sorted(df[facet_by].unique())
+
+    n_facets = len(values)
+    ncols = min(4, n_facets)
+    nrows = (n_facets + ncols - 1) // ncols
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 4 * nrows))
+    if nrows == 1 and ncols == 1:
+        axes = np.array([[axes]])
+    elif nrows == 1 or ncols == 1:
+        axes = axes.reshape(nrows, ncols)
+
+    for idx, value in enumerate(values):
+        row = idx // ncols
+        col = idx % ncols
+        ax = axes[row, col]
+
+        subset = df[df[facet_by] == value].dropna(subset=[metric])
+        if len(subset) == 0:
+            ax.text(0.5, 0.5, 'No data', ha='center', va='center')
+            ax.set_title('{}={} (no data)'.format(facet_by, value))
+            continue
+
+        pivot = subset.pivot_table(values=metric, index=y_col, columns=x_col, aggfunc='mean')
+        sns.heatmap(pivot, annot=True, fmt='.2f', cmap='viridis', ax=ax,
+                    cbar_kws={'label': metric})
+        ax.set_title('{}={}'.format(facet_by, value))
+
+    # Hide unused subplots
+    for idx in range(n_facets, nrows * ncols):
+        row = idx // ncols
+        col = idx % ncols
+        axes[row, col].axis('off')
+
+    fig.suptitle(title or '{} heatmaps: {} vs {} (by {})'.format(
+        metric, y_col, x_col, facet_by), fontsize=14, y=1.00)
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.tight_layout()
+    return fig
+
+
+def summary_stats(df, group_by, metrics=None):
+    """Print summary statistics grouped by parameter."""
+    if metrics is None:
+        metrics = ['f1', 'precision', 'recall', 'shd_frac']
+
+    available_metrics = [m for m in metrics if m in df.columns]
+
+    print("\nSummary statistics grouped by {}:".format(group_by))
+    print("=" * 60)
+
+    for metric in available_metrics:
+        print("\n{}:".format(metric.upper()))
+        summary = df.groupby(group_by)[metric].agg(['count', 'mean', 'std', 'min', 'max'])
+        print(summary)
+
+
+# Example analysis workflows
+
+def analyze_mir9(csv_path, output_dir='plots_mir9'):
+    """Example analysis for MIR9 dataset."""
     df = load_mir9_data(csv_path)
 
-    print("Loaded {} rows from MIR9 data".format(len(df)))
-    print("Modes: {}".format(df['mode'].unique()))
-    print("Datapoints range: {} - {}".format(df['datapoints'].min(), df['datapoints'].max()))
-    print("Trajectory length range: {} - {}".format(df['trajectory_len'].min(), df['trajectory_len'].max()))
+    print("MIR9 Dataset:")
+    print("  Rows: {}".format(len(df)))
+    print("  Modes: {}".format(df['mode'].unique()))
+    print("  Datapoints: {}".format(sorted(df['datapoints'].unique())))
+    print("  Lengths: {}".format(sorted(df['trajectory_len'].unique())))
+    print("  Frequencies: {}".format(sorted(df['freq'].unique())))
 
-    # F1 vs datapoints
-    plot_vs_datapoints(df, save_path='{}/f1_vs_datapoints.png'.format(output_dir))
+    # Filter to freq=1 to avoid mixing frequencies
+    freq1 = filter_data(df, freq=1.0)
 
-    # F1 vs trajectory length
-    plot_vs_trajectory_length(df, save_path='{}/f1_vs_trajectory_length.png'.format(output_dir))
+    plot_metric_vs_param(freq1, 'datapoints', 'f1', split_by='mode',
+                         title='F1 vs Trajectories (freq=1)',
+                         save_path='{}/f1_vs_datapoints.png'.format(output_dir))
 
-    # Heatmaps for Sync and Async
-    plot_metrics_heatmap(df, 'datapoints', 'trajectory_len', metric='f1',
-                         mode_filter='Sync', save_path='{}/heatmap_f1_sync.png'.format(output_dir))
-    plot_metrics_heatmap(df, 'datapoints', 'trajectory_len', metric='f1',
-                         mode_filter='Async', save_path='{}/heatmap_f1_async.png'.format(output_dir))
+    plot_metric_vs_param(freq1, 'trajectory_len', 'f1', split_by='mode',
+                         title='F1 vs Length (freq=1)',
+                         save_path='{}/f1_vs_length.png'.format(output_dir))
 
-    # Metrics comparison
-    plot_metrics_comparison(df,
-                            'datapoints',
-                            save_path='{}/metrics_by_datapoints.png'.format(output_dir),
-                            metric_cols = ['prec', 'rec', 'f1'])
-    plot_metrics_comparison(df,
-                            'trajectory_len',
-                            save_path='{}/metrics_by_length.png'.format(output_dir),
-                            metric_cols = ['prec', 'rec', 'f1'])
+    plot_precision_recall(freq1, color_by='mode',
+                          title='Precision-Recall (freq=1)',
+                          save_path='{}/precision_recall.png'.format(output_dir),
+                          col_names = ['prec', 'rec'])
 
-    # Sync vs Async comparison
-    plot_sync_vs_async_comparison(df, metric='f1', group_col='datapoints',
-                                  save_path='{}/sync_async_datapoints.png'.format(output_dir))
-    plot_sync_vs_async_comparison(df, metric='f1', group_col='trajectory_len',
-                                  save_path='{}/sync_async_length.png'.format(output_dir))
+    sync_freq1 = filter_data(df, mode='Sync', freq=1.0)
+    plot_heatmap(sync_freq1, 'datapoints', 'trajectory_len', 'f1',
+                 title='F1 Heatmap (Sync, freq=1)',
+                 save_path='{}/heatmap_sync.png'.format(output_dir))
 
-    print("All plots saved to {}/".format(output_dir))
+    async_freq1 = filter_data(df, mode='Async', freq=1.0)
+    plot_heatmap(async_freq1, 'datapoints', 'trajectory_len', 'f1',
+                 title='F1 Heatmap (Async, freq=1)',
+                 save_path='{}/heatmap_async.png'.format(output_dir))
+
+    print("\nPlots saved to {}".format(output_dir))
 
 
-def generate_all_plots_tsv(tsv_path, output_dir='plots_tsv'):
-    """Generate all relevant plots for TSV dataset."""
-
+def analyze_tsv(tsv_path, output_dir='plots_tsv'):
+    """Example analysis for TSV dataset with proper conditioning."""
     df = load_tsv_data(tsv_path)
 
-    print("Loaded {} rows from TSV data".format(len(df)))
-    print("Nodes range: {} - {}".format(df['nodes'].min(), df['nodes'].max()))
-    print("Scoring functions: {}".format(df['score'].unique()))
-    print("Valid F1 scores: {}/{}".format(df['f1'].notna().sum(), len(df)))
+    print("\nTSV Dataset:")
+    print("  Rows: {} (valid: {})".format(len(df), df['f1'].notna().sum()))
+    print("  Nodes: {}".format(sorted(df['nodes'].unique())))
+    print("  Scoring: {}".format(df['score'].unique()))
 
-    # F1 vs number of nodes
-    plot_vs_nodes(df, save_path='{}/f1_vs_nodes.png'.format(output_dir))
-    plot_vs_nodes_by_score(df, save_path='{}/f1_vs_nodes_by_score.png'.format(output_dir))
+    summary_stats(df, 'nodes')
 
-    # F1 vs datapoints (using ntraj column)
-    plot_vs_datapoints(df,
-                       datapoints_col='ntraj',
-                       mode_col='mode',
-                       save_path='{}/f1_vs_ntraj.png'.format(output_dir))
+    # Heatmap: nodes vs ntraj, with MDL, sf=1, len=5, tf=0.4 fixed
+    mdl_fixed = filter_data(df, score='MDL', sf=1, len=5, tf=0.4)
+    plot_heatmap(mdl_fixed, 'ntraj', 'nodes', 'f1',
+                 title='F1: Nodes vs Trajectories (MDL, sf=1, len=5, tf=0.4)',
+                 save_path='{}/heatmap_nodes_ntraj.png'.format(output_dir))
 
-    # F1 vs trajectory length (using len column)
-    plot_vs_trajectory_length(df,
-                              length_col='len', mode_col='mode',
-                              save_path='{}/f1_vs_len.png'.format(output_dir))
+    # Compare algorithms with sf=1, ntraj=3, len=5, tf=0.4 fixed
+    for_comparison = filter_data(df, sf=1, ntraj=3, len=5, tf=0.4)
+    plot_metric_vs_param(for_comparison, 'nodes', 'f1', split_by='score',
+                         title='F1 vs Nodes: MDL vs BDE (sf=1, ntraj=3, len=5, tf=0.4)',
+                         save_path='{}/f1_nodes_by_score.png'.format(output_dir))
 
-    # Heatmaps
-    plot_metrics_heatmap(df, 'ntraj', 'len', metric='f1',
-                         save_path='{}/heatmap_f1_ntraj_len.png'.format(output_dir))
-    plot_metrics_heatmap(df, 'nodes', 'ntraj', metric='f1',
-                         save_path='{}/heatmap_f1_nodes_ntraj.png'.format(output_dir))
+    # Multiple metrics with sf=1, ntraj=3, len=5, tf=0.4 fixed
+    plot_multiple_metrics(for_comparison, 'nodes',
+                          ['shd_frac', 'precision', 'recall', 'f1'],
+                          split_by='score',
+                          title='All metrics vs Nodes (sf=1, ntraj=3, len=5, tf=0.4)',
+                          save_path='{}/all_metrics_vs_nodes.png'.format(output_dir))
 
-    # Metrics comparison
-    plot_metrics_comparison(df,
-                            'nodes',
-                            save_path='{}/metrics_by_nodes.png'.format(output_dir),
-                            metric_cols = ['hd_frac', 'shd_frac', 'precision', 'recall', 'f1'])
-    plot_metrics_comparison(df,
-                            'ntraj',
-                            save_path='{}/metrics_by_ntraj.png'.format(output_dir),
-                            metric_cols = ['hd_frac', 'shd_frac', 'precision', 'recall', 'f1'])
+    # Precision-recall with MDL, sf=1, ntraj=3, len=5, tf=0.4
+    mdl_specific = filter_data(df, score='MDL', sf=1, ntraj=3, len=5, tf=0.4)
+    plot_precision_recall(mdl_specific, color_by='nodes',
+                          title='Precision-Recall (MDL, sf=1, ntraj=3, len=5, tf=0.4)',
+                          save_path='{}/precision_recall.png'.format(output_dir),
+                          col_names = ['precision', 'recall'])
 
-    print("All plots saved to {}/".format(output_dir))
+    print("\nPlots saved to {}".format(output_dir))
 
 
 if __name__ == '__main__':
+    # Example usage
+
+    #analyze_mir9('tables/MIR9_evaluation.csv', 'plots_mir9')
+    analyze_tsv('tables/evaluation_asynchronous.tsv', 'plots_tsv_async')
+
     pass
-    # Example usage - modify paths as needed
-
-    # For MIR9 CSV data
-    #generate_all_plots_mir9('tables/MIR9_evaluation.csv')
-
-    # For TSV data
-    generate_all_plots_tsv('tables/evaluation_synchronous.tsv', output_dir="plots_tsv_sync")
