@@ -59,10 +59,10 @@ def main():
 
                 gt_adj = adjacency_matrix_from_file(gt_file)
 
-                for sf in sampling_frequencies:
-                    for ntraj in num_trajectories_list:
-                        for tlen in trajectory_lengths:
-                            for tf in transient_fractions:
+                for sf in SAMPLING_FREQUENCIES:
+                    for ntraj in N_TRAJECTORIES_LIST:
+                        for tlen in TRAJECTORY_LENGTHS:
+                            for tf in TRANSIENT_FRACTIONS:
 
                                 tf_int = int(tf * 100)
 

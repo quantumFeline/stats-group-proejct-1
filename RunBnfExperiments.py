@@ -11,7 +11,8 @@ N_TRAJECTORIES_LIST = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39]
 TRAJECTORY_LENGTHS = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39]
 TRANSIENT_FRACTIONS = [1.0 / 5, 2.0 / 5, 3.0 / 5, 4.0 / 5]
 
-modes = ["synchronous", "asynchronous"]
+#modes = ["synchronous", "asynchronous"]
+modes = ["asynchronous"]
 scores = ["MDL", "BDE"]
 
 def ensure_dir(path):
@@ -43,7 +44,7 @@ def main():
         print("MODE:", mode)
         print("=======================================")
 
-        for num_nodes in range(5, 17):
+        for num_nodes in range(5, 16):
             print("\n--- {} nodes ---".format(num_nodes))
 
             for sf in SAMPLING_FREQUENCIES:
