@@ -18,7 +18,7 @@
 \usepackage{float}
 
 \title{Statistical Data Analysis 2 - Final Project - Report}
-\author{Czapiewska Magdalena, Khodzina Anastasiya, Nachaieva Veronika, Znamierowski Mikołaj}
+\author{Czapiewska Magdalena, Khodzina Anastasiya, Nechaieva Veronika, Znamierowski Mikołaj}
 
 \begin{document}
 
@@ -30,13 +30,14 @@
 
 \section{Boolean Network representation and construction}
 
-In this section we describe the implementation of the code handling Boolean networks. We divide it into four subsections for better readability.
+In this section we describe the implementation of the code handling Boolean networks.
+We divide it into four subsections for better readability.
 
 \subsection{Creation of the network}
 
-Each Boolean network is initiated with specified number of nodes, as, according to the project's description, everything else should be randomized. 
+Each Boolean network is initiated with specified number of nodes, as, according to the project's description, everything else should be randomized.
 However, since part II requires the usage of a specific model, we also provide an additional option to specify the transitions (this also gives us a possibility to run more tests on previously created networks, if needed). 
-The main usage of this feature is present in loading the networks from files, which will be described later. 
+The main usage of this feature is present in loading the networks from files, which will be described later.
 If no transitions are specified, the model creates them randomly, with at most $3$ parent nodes for each node. 
 The concrete representation of transitions (along with some theoretical issues concerning it) and the method of their creation can be found in the following subsection.
 
@@ -44,18 +45,20 @@ The concrete representation of transitions (along with some theoretical issues c
 
 Theoretically, each transition has a form of a logical formula (with negations, conjunctions and disjunctions) with nodes as boolean variables. 
 However, each such formula can be rewritten in multiple ways, without changing the output. 
-For example, the famous De Morgan's law states that $\neg (x_1 \wedge x_2)$ is equivalent to $\neg x_1 \vee \neg x_2$. 
+For example, the famous De Morgan's law states that $\neg (x_1 \wedge x_2)$ is equivalent to $\neg x_1 \vee \neg x_2$.
 To standardize this, the Conjunctive Normal Form (CNF) or the Disjunctive Normal Form (DNF) can be used. 
-This however proves quite problematic to implement when creating a random \textbf{unbiased} logical formula (i.e. each transition can be achieved with equal probability). 
+This however proves quite problematic to implement when creating a random \textbf{unbiased} logical formula (i.e.\ each transition can be achieved with equal probability).
 While implementing it, one can also easily run into problems similar to SAT, which are NP-hard.
 
 To address the above issues, the code uses a binary representation of the transitions (in particular, it avoids all logical formulas). 
-Namely: each transition is a tuple of two lists. The first is a list of (non-repeating) parents of length $n$ (where $0 \leq n \leq 3$ is chosen randomly). 
-The second one is a random binary sequence of length $2^n$. It represents the transition in the following format: if the last parent is zero, we look at the first half of the sequence, otherwise, on the second half. 
+Namely: each transition is a tuple of two lists.
+The first is a list of (non-repeating) parents of length $n$ (where $0 \leq n \leq 3$ is chosen randomly).
+The second one is a random binary sequence of length $2^n$.
+It represents the transition in the following format: if the last parent is zero, we look at the first half of the sequence, otherwise, on the second half.
 We repeat it for all parents (from last to first), reducing our sequence to one element, which is the outcome of the transition. 
 This way, all transitions are reachable, and \textbf{equally probable} (for given $n$), thus giving the most general networks.
 
-To illustrate it with an example: suppose that the node $x_2$ has parents $x_3, x_4, x_0$ and the transition is $[0, 1, 0, 1, 1, 0, 1, 1]$. 
+To illustrate it with an example: suppose that the node $x_2$ has parents $x_3, x_4, x_0$ and the transition is $[0, 1, 0, 1, 1, 0, 1, 1]$.
 This means that the transition is described by the following table:
 
 \[
@@ -80,43 +83,52 @@ However, we don't want to overwrite it with that value, so, when updating the st
 
 \subsection{Saving and loading the network}
 
-After creating the network, its structure (i.e. the number of nodes and the transitions) is saved to a file for later reference (which is crucial for the following parts). 
+After creating the network, its original structure (i.e. the number of nodes and the transitions) is saved to a file for later reference (which is crucial for the following parts where we compare the ground truth network structure to the BNFinder results).
 The format used is the following:
 \begin{itemize}
     \item first line of the file is a single integer defining the number of nodes;
-    \item each of the next lines defines a transition in the format \verb|[list of parents]; [transition]| (separated with comas) for the corresponding node.
+    \item each of the next lines defines a transition in the format \verb|[list of node parents]; [transition]| (separated with commas) for the corresponding node.
 \end{itemize}
 A file with such format can be then loaded into the program, which allows for using custom Boolean networks, not just the random ones.
 
 \subsection{Creating and saving the datasets}
 
-After the creation of our model, we can create datasets by running a single command. With it, we can specify:
+After the creation of our model, we can create datasets by running a single command.
+We can specify the following arguments:
 \begin{itemize}
-    \item the number of datapoints (i.e. transitions) in the dataset;
-    \item the length of all trajectories in the dataset;
-    \item if the transitions should be applied synchronously or not;
-    \item the sampling frequency;
+    \item \textbf{-d} the number of datapoints (i.e.\ transitions) in the dataset;
+    \item \textbf{-l} the length of all trajectories in the dataset;
+    \item \textbf{-s} whether the transitions should be applied synchronously or not;
+    \item \textbf{-f} the sampling frequency;
     \item the starting states for the trajectories (with an option of specifying all, only a few, or none - the rest are filled with random states).
 \end{itemize}
 
-The datasets created this way can be then saved to a file of format compatible with BNFinder2, for later inference.
+Example:
+\begin{lstlisting}
+    CreateDatasets.py -o output.txt -g network.txt -n 10 -d 20 -l 15 -s
+\end{lstlisting}
 
+The datasets created in this way are saved to a file of format compatible with BNFinder2 for later inference.
 
 
 \section{Attractor detection implementation}
 
-One of the \textbf{key characteristics of a dataset} generated from a Boolean network is the \textbf{proportion of transient and attractor states} present in the observed trajectories. Since this proportion is explicitly investigated in the project, it is necessary to \textbf{identify attractors in the state space} of each generated network.
+One of the \textbf{key characteristics of a dataset} generated from a Boolean network is the \textbf{proportion of transient and attractor states} present in the observed trajectories.
+Since this proportion is explicitly investigated in the project, it is necessary to \textbf{identify attractors in the state space} of each generated network.
 
 To enable control over this characteristic, dedicated classes were implemented that, for a given Boolean network, classify each possible network state either as an attractor state or as a transient state, based on the structure of the state transition graph.
 
-\textbf{The attractor detection strategy depends on the network update mode}, as the structure of the state transition graph differs between synchronous and asynchronous update schemes. The following subsections describe the approaches used for attractor identification under synchronous and asynchronous dynamics.
+\textbf{The attractor detection strategy depends on the network update mode}, as the structure of the state transition graph differs between synchronous and asynchronous update schemes.
+The following subsections describe the approaches used for attractor identification under synchronous and asynchronous dynamics.
 
 \subsection{Attractors in synchronous mode}
 The implementation of the \texttt{StateSpaceAnalyzer} class can be found in the \texttt{StateSpaceAnalysisSynchronous.py} file.\newline
 
-For each Boolean network, a \textbf{dictionary} is created that stores \textbf{information for every possible network state}. Specifically, for each state, it is recorded whether the state \textbf{belongs to an attractor}, the \textbf{identifier of the corresponding attractor}, and the \textbf{distance of the state to the attractor} (with distance 0 for attractor states).\newline
+For each Boolean network, a \textbf{dictionary} is created that stores \textbf{information for every possible network state}.
+Specifically, for each state, it is recorded whether the state \textbf{belongs to an attractor}, the \textbf{identifier of the corresponding attractor}, and the \textbf{distance of the state to the attractor} (with distance 0 for attractor states).\newline
 
-The algorithm uses the fact that \textbf{trajectories in synchronous Boolean networks are deterministic}: the next state of the network is uniquely determined by its current state. Starting from each state that has not yet been analyzed, the network is iteratively updated following its synchronous dynamics until one of two situations occurs:
+The algorithm uses the fact that \textbf{trajectories in synchronous Boolean networks are deterministic}: the next state of the network is uniquely determined by its current state.
+Starting from each state that has not yet been analyzed, the network is iteratively updated following its synchronous dynamics until one of two situations occurs:
 \begin{enumerate}
     \item The trajectory reaches a state that \textbf{has already been visited within the current path}. In this case, a \textbf{cycle} (possibly consisting of a single state) has been detected, corresponding to a \textbf{new attractor}. All states in the cycle are marked as attractor states, and transient states leading to the cycle are assigned the corresponding attractor ID along with their distance to the attractor.
     \item The trajectory reaches a state that \textbf{has already been analyzed in a previous trajectory}. In this case, the previously computed attractor information is propagated backward along the current path, assigning attractor IDs and distances to all transient states in the path.
@@ -197,7 +209,7 @@ The accuracy of the reconstructed networks is assessed using five measures: reca
 All functions for computing metrics from adjacency matrices, as well as for generating adjacency matrices from ground truth files or SIF files (outputs of BNFinder), are implemented in the file \texttt{EvaluationMetrics.py}.\newline
 The evaluation of BNFinder results on datasets generated from synthetic networks is implemented in \texttt{EvaluateAllBnfResults.py}.\newline\newline
 
-{\large \textbf{Description of metrices and justification of choice}}\newline\newline
+{\large \textbf{Description of metrics and justification of choice}}\newline\newline
 \noindent
 We define the basic quantities as follows:
 
@@ -212,25 +224,24 @@ We define the basic quantities as follows:
 \[
 \mathrm{Recall} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}}
 \]
-Justification: recall allows measuring the fraction of dependencies (edges) present in the ground truth network that are also identified in the reconstructed network.\newline\newline
+Recall allows measuring the fraction of dependencies (edges) present in the ground truth network that are also identified in the reconstructed network.\newline\newline
 \noindent
 \fbox{\textbf{Precision}}
 \[
 \mathrm{Precision} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}}
 \]
-Justification: precision allows quantifying the proportion of edges inferred by the algorithm that are indeed present in the ground truth network.\newline\newline
+Precision allows quantifying the proportion of edges inferred by the algorithm that are indeed present in the ground truth network.\newline\newline
 \noindent
 \fbox{\textbf{F1-score}}
 \[
 \mathrm{F1} = 2 \cdot \frac{\mathrm{Precision} \cdot \mathrm{Recall}}
 {\mathrm{Precision} + \mathrm{Recall}}
 \]
-Justification: the F1-score is the harmonic mean of precision and recall. It reaches high values only if both precision and recall are high, making it a good indicator of the quality of the reconstruction, as it measures both whether the algorithm correctly reconstructed the edges that exist and whether it avoided reconstructing edges that should not be present.\newline\newline
+The F1-score is the harmonic mean of precision and recall. It reaches high values only if both precision and recall are high, making it a good indicator of the quality of the reconstruction, as it measures both whether the algorithm correctly reconstructed the edges that exist and whether it avoided reconstructing edges that should not be present.\newline\newline
 \noindent
 \fbox{\textbf{Hamming distance}}\newline\newline
 \noindent
-The Hamming distance counts the total number of differing entries between
-the adjacency matrices of the ground truth and reconstructed networks:
+The Hamming distance counts the total number of differing entries between  the adjacency matrices of the ground truth and reconstructed networks:
 \[
 \mathrm{HD} = \sum_{i,j} \mathbf{1}[A[i,j] \neq B[i,j]],
 \]
@@ -244,7 +255,9 @@ Justification: the normalized Hamming distance allows measuring the fraction of 
 \noindent
 \fbox{\textbf{Structural Hamming distance}}\newline\newline
 \noindent
-The Structural Hamming distance (SHD) measures the number of unordered pairs of vertices for which the interactions in the reconstructed network need to be modified to match the ground truth network. Each inconsistency between a pair of vertices - whether it requires an edge addition, removal, or reversal - counts as one operation. In other words, we count whether a pair is incorrect, without distinguishing the type of correction needed (and without counting the number of corrections - addition of 2 edges counts as 1).\newline\newline
+The Structural Hamming distance (SHD) measures the number of unordered pairs of vertices for which the interactions in the reconstructed network need to be modified to match the ground truth network.
+Each inconsistency between a pair of vertices - whether it requires an edge addition, removal, or reversal - counts as one operation.
+In other words, we count whether a pair is incorrect, without distinguishing the type of correction needed (and without counting the number of corrections - addition of 2 edges counts as 1).\newline\newline
 Consider a pair of vertices $(i, j)$:
 \begin{itemize}
 \item{For self-loops ($i = j$), a mismatch between the ground truth and reconstructed network counts as one operation.}
@@ -280,7 +293,7 @@ TODO: Plots
 
 \section{Reconstructing the model of a real-life biological mechanism}
 \subsection{Chosen Model}
-MIR-9-NEUROGENESIS  with ID = 88 Boolean Network model was chosen from Biodivine repository, because it has small number of nodes(6), which reduces computational complexity and should give better accuracy, and has zero inputs, which eliminates the need to simulate external environmental changes, allowing for a straightforward simulation of the network's internal dynamics. Below you can see graph for MIR9 model where yellow nodes are attractors.
+\textbf{MIR-9-NEUROGENESIS}  (\textbf{ID = 88}) Boolean Network model was chosen from Biodivine repository, because it has small number of nodes(6), which reduces computational complexity and should give better accuracy, and has zero inputs, which eliminates the need to simulate external environmental changes, allowing for a straightforward simulation of the network's internal dynamics. Below you can see graph for MIR9 model where yellow nodes are attractors.
 \begin{figure}[htp]
     \centering
     \includegraphics[width=13cm]{Figure_model_MIR9.png}
@@ -345,9 +358,12 @@ Authors (given in alphabetical order) and their contributions to the project:
         \item Organisational activity (Github etc.)
         \item Reworking the code for Boolean networks; readability
         \item Saving and loading the network ground truth structure
-        \item Reworking the saving dataset function into a proper format for BNFinder2
+        \item Implementing the dataset save/load in a proper format for BNFinder2
         \item Converting the Python scripts to work with command-line arguments
         \item Testing BNF base functionality
+        \item Implementing the graphs plotting (single-argument plots, heatmaps, metrics comparison)
+        \item Result analysis (for sub-cases and general cases)
+        \item Editing and reviewing
     \end{itemize}
     \item Znamierowski Mikołaj:
     \begin{itemize}
