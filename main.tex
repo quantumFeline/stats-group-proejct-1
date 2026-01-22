@@ -100,8 +100,9 @@ We can specify the following arguments:
     \item \textbf{-l} the length of all trajectories in the dataset;
     \item \textbf{-s} whether the transitions should be applied synchronously or not;
     \item \textbf{-f} the sampling frequency;
-    \item the starting states for the trajectories (with an option of specifying all, only a few, or none - the rest are filled with random states).
 \end{itemize}
+
+We randomize the starting states for the trajectories.
 
 Example:
 \begin{lstlisting}
@@ -339,13 +340,15 @@ Authors (given in alphabetical order) and their contributions to the project:
     \begin{itemize}
     \item Implementing attractor detection in the state space for synchronous update mode
     \item Implementing attractor detection in the state space for asynchronous update mode (two approaches)
-    \item Implementing functions for generating datasets, taking into account update mode, number of data points, trajectory length, sampling frequency and fraction of transient states; implementing a script for generating datasets for synthetic networks
+    \item Implementing functions for generating datasets, taking into account update mode, number of data points, trajectory length, sampling frequency and fraction of transient states
+    \item Implementing a script for generating datasets for synthetic networks
     \item Implementing a script to run BNFinder2 on datasets derived from synthetic networks
-    \item Choosing, describing and implementing evaluation metrics; creating a script for evaluating BNFinder2 results
+    \item Choosing, describing and implementing evaluation metrics
+    \item Creating a script for evaluating BNFinder2 results
 \end{itemize}
     \item Khodina Anastasiya(whole Part 2):
     \begin{itemize}
-        \item Choosing appropriate model in Part 2
+        \item Choosing the appropriate model in Part 2
         \item Interpreting/Processing chosen model code
         \item Creating inference of BN class for the model
         \item Generating trajectories for the model
@@ -361,8 +364,10 @@ Authors (given in alphabetical order) and their contributions to the project:
         \item Implementing the dataset save/load in a proper format for BNFinder2
         \item Converting the Python scripts to work with command-line arguments
         \item Testing BNF base functionality
+        \item Processing and converting of the aggregated BNFinder results
         \item Implementing the graphs plotting (single-argument plots, heatmaps, metrics comparison)
-        \item Result analysis (for sub-cases and general cases)
+        \item Evaluating the network-finding accuracy according to the implemented metrics
+        \item Result analysis (for subcases as well as the general cases).
         \item Editing and reviewing
     \end{itemize}
     \item Znamierowski Mikołaj:
