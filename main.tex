@@ -28,6 +28,8 @@
 
 % You should prepare and submit a comprehensive report describing your experimental setup, the datasets generated, and the results obtained. The report should include the specifications of all Boolean networks considered in your study, along with the corresponding input files containing the simulated datasets provided to BNFinder2. It should justify all methodological choices made and present the results both in written form and through appropriate graphical representations. Finally, the conclusions drawn from your experiments should be clearly articulated.
 
+Self-link:
+
 \section{Boolean Network representation and construction}
 
 In this section we describe the implementation of the code handling Boolean networks contained in \texttt{BooleanNetwork.py}.
@@ -274,7 +276,7 @@ To compare the reconstruction accuracy across networks of different sizes, we de
 \mathrm{HD}_{\mathrm{norm}} = \frac{\mathrm{HD}}{n^2},
 \]
 where $n$ is the number of nodes in the network.\newline\newline
-Justification: the normalized Hamming distance allows measuring the fraction of ordered pairs of vertices $(i, j)$ for which either a directed edge from $i$ to $j$ exists in the ground truth but is missing in the reconstruction, or the edge is inferred by the reconstruction but does not exist in the ground truth.\newline\newline
+The normalized Hamming distance allows measuring the fraction of ordered pairs of vertices $(i, j)$ for which either a directed edge from $i$ to $j$ exists in the ground truth but is missing in the reconstruction, or the edge is inferred by the reconstruction but does not exist in the ground truth.\newline\newline
 \noindent
 \fbox{\textbf{Structural Hamming distance}}\newline\newline
 \noindent
@@ -310,9 +312,26 @@ To compare reconstruction accuracy across networks of different sizes, we define
 \mathrm{SHD}_{\mathrm{norm}} = \frac{\mathrm{SHD}}{\frac{n(n-1)}{2} + n},
 \]
 where $n$ is the number of vertices in the network.\newline\newline
-Justification: the normalized Structural Hamming distance measures the fraction of unordered pairs of vertices $(i, j)$ for which the interaction in the reconstructed network differs from the interaction in the ground truth network.
-\subsection{Results with respect to the characteristics of the datasets and the scoring functions used}
-TODO: Plots
+The normalized Structural Hamming distance measures the fraction of unordered pairs of vertices $(i, j)$ for which the interaction in the reconstructed network differs from the interaction in the ground truth network.
+
+\subsection{Results}
+
+We used a custom Python script (RunBNFExperiments.py) to fully automate the reconstruction process and evaluation.
+The script iterates over all combinations of parameters considered (see table in BNFinder2 usage) and collects the metrics measuring the Bayesian network restoration for each combination.
+The results are stored in a .tsv table.
+
+After the .tsv results are created, a separate script - NetworkAccuracyEvaluation.py goes over the results and displays the aggregated, averaged-out metrics depending on the given parameters.
+The following graph types were created:
+
+\begin{itemize}
+    \item Linear graph (metric against a parameters)
+    \item Heatmap (metric against a pair of parameters)
+    \item Bar plot (a collection different metrics against a parameter)
+\end{itemize}
+
+For most graphs presented we use aggregated metric, i.e.\ we consider all possible values of the parameters not analysed in the given graph; we also created some graphs where the other parameters are fixed.
+In theory, this should be able to pick up on stronger correlation, as in situations where other parameters are suboptimal (e.g. good trajectory length but too few data points or vice versa) there is more noise, which may make the positive trends less apparent.
+In practice, this results in having too little overall data to average out and, consequentially, too much noise.
 
 \section{Reconstructing the model of a real-life biological mechanism}
 \subsection{Chosen Model}
@@ -350,7 +369,10 @@ The total number of combinations is calculated as $13 \times 13 \times 2 \times 
 
 \subsection{Reconstructing}
 The next step was to reconstruct Bayesian Network with MDL scoring function, which was chosen based on the insights from the first Part.
-To fully automate the reconstruction process and evaluation, a custom Python script was developed. This allowed for the batch processing of all 1014 datasets and the automatic calculation of all metrics defined in Part 1, eliminating the need for manual intervention.
+To fully automate the reconstruction process and evaluation, a custom Python script was developed.
+This allowed for the batch processing of all 1014 datasets and the automatic calculation of all metrics defined in Part 1, eliminating the need for manual intervention.
+
+
 
 \section{Conclusions drawn from experiments}
 
