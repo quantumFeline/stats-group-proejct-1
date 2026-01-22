@@ -26,8 +26,9 @@
 \tableofcontents
 
 % You should prepare and submit a comprehensive report describing your experimental setup, the datasets generated, and the results obtained. The report should include the specifications of all Boolean networks considered in your study, along with the corresponding input files containing the simulated datasets provided to BNFinder2. It should justify all methodological choices made and present the results both in written form and through appropriate graphical representations. Finally, the conclusions drawn from your experiments should be clearly articulated.
-
-Self-link:
+\vspace{5em}
+\noindent
+\frame{\large Code is available on GitHub: \href{https://github.com/quantumFeline/stats-group-proejct-1.git}{https://github.com/quantumFeline/stats-group-proejct-1.git}}
 
 \section{Boolean Network representation and construction}
 
@@ -220,7 +221,7 @@ For $n = 14..16$ we run bnf for the parameters:
     \item \textbf{Sampling frequency:} 1, 2, and 3.
     \item \textbf{Fraction of transient states:} 0.2, 0.6.
 \end{itemize}
-
+\noindent
 In the script we leave the version for reconstructing networks from all datasets.
 
 \section{Evaluation of the accuracy of the reconstructed network}
@@ -315,15 +316,16 @@ The normalized Structural Hamming distance measures the fraction of unordered pa
 
 \subsection{Results}
 
-We used a custom Python script (RunBNFExperiments.py) to fully automate the reconstruction process and evaluation.
-The script iterates over all combinations of parameters considered (see table in BNFinder2 usage) and collects the metrics measuring the Bayesian network restoration for each combination.
-The results are stored in a .tsv table.
+We used a custom Python script (\texttt{RunBnfExperiments.py}) to fully automate the reconstruction process and evaluation.
+The script iterates over all combinations of parameters considered (see the list in BNFinder2 usage) and saves results. Then a script \texttt{EvaluateAllBnfResults.py} is used to collect the metrics measuring the Bayesian network restoration for each combination.
+The results are stored in a .tsv table (\texttt{tables/evaluation\_asynchronous.tsv}, \texttt{tables/evaluation\_synchronous.tsv}).
 
-After the .tsv results are created, a separate script - NetworkAccuracyEvaluation.py goes over the results and displays the aggregated, averaged-out metrics depending on the given parameters.
-The following graph types were created:
+After the .tsv results are created, a separate script - \texttt{NetworkAccuracyEvaluation.py} goes over the results and displays the aggregated, averaged-out metrics depending on the given parameters.
+The following graph types were used:
 
 \begin{itemize}
     \item Linear graph (metric against a parameter)
+    \item Linear comparison graph (MDL vs BDE evaluation)
     \item Heatmap (metric against a pair of parameters)
     \item Bar plot (a collection different metrics against a parameter)
 \end{itemize}
@@ -408,8 +410,8 @@ The graph size does not have significant effect on performance either way - it i
 
 \section{Reconstructing the model of a real-life biological mechanism}
 \subsection{Chosen Model}
-\textbf{MIR-9-NEUROGENESIS}  (\textbf{ID = 88}) Boolean Network model was chosen from Biodivine repository, because it has small number of nodes(6), which reduces computational complexity and should give better accuracy, and has zero inputs, which eliminates the need to simulate external environmental changes, allowing for a straightforward simulation of the network's internal dynamics. Below you can see graph for MIR9 model where yellow nodes are attractors.
-\begin{figure}[htp]
+\textbf{MIR-9-NEUROGENESIS} (\textbf{ID = 88})  Boolean Network model was chosen from Biodivine repository, because it has small number of nodes(6), which reduces computational complexity and should give better accuracy, and has zero inputs, which eliminates the need to simulate external environmental changes, allowing for a straightforward simulation of the network's internal dynamics. Below you can see graph for MIR9 model where yellow nodes are attractors.
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{Figure_model_MIR9.png}
     \label{fig:MIR9}
@@ -448,7 +450,7 @@ The evaluation process was analogous to evaluation in part 1.
 While some technical modifications were needed in order to account for a different data format (.csv file, column names, number formatting), the general approach was the same for both evaluations, and the script could be easily extended.
 A function was added to compare the results on sync and async datasets.
 
-\section{Conclusions drawn from experiments}
+\subsection{Results}
 
 The results on MIR9 dataset are less clear in comparison to artificial data.
 However, some positive correlation with the dataset size can be nevertheless observed:
@@ -480,6 +482,7 @@ Authors (given in alphabetical order) and their contributions to the project:
     \item Implementing a script to run BNFinder2 on datasets derived from synthetic networks
     \item Choosing, describing and implementing evaluation metrics
     \item Creating a script for evaluating BNFinder2 results
+    \item Report: Attractor detection implementation (2), Datasets generation (3), Evaluation of the accuracy of the reconstructed network (only description of the metrics in 5.1, without results in 5.2)
 \end{itemize}
     \item Khodina Anastasiya(whole Part 2):
     \begin{itemize}
@@ -489,7 +492,8 @@ Authors (given in alphabetical order) and their contributions to the project:
         \item Generating trajectories for the model
         \item Reconstructing the BN from created trajectories
         \item Calculating metrics for the model reconstruction from Part 2
-        \item Creating graphical representation for the model
+        \item Creating graphical representation for the model\
+        \item Describing Part 2 in the report (6.1, 6.2, 6.3, without results in 6.4)
     \end{itemize}
     \item Nechaieva Veronika:
     \begin{itemize}
@@ -502,7 +506,7 @@ Authors (given in alphabetical order) and their contributions to the project:
         \item Processing and converting of the aggregated BNFinder results
         \item Implementing the graphs plotting (single-argument plots, heatmaps, metrics comparison)
         \item Evaluating the network-finding accuracy according to the implemented metrics
-        \item Result analysis (for subcases as well as the general cases).
+        \item Report: result analysis (for subcases as well as the general cases) for Part 1 (5.2) and Part 2 (6.4).
         \item Editing and reviewing
     \end{itemize}
     \item Znamierowski Mikołaj:
