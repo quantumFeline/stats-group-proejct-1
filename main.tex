@@ -27,11 +27,9 @@
 \tableofcontents
 
 % You should prepare and submit a comprehensive report describing your experimental setup, the datasets generated, and the results obtained. The report should include the specifications of all Boolean networks considered in your study, along with the corresponding input files containing the simulated datasets provided to BNFinder2. It should justify all methodological choices made and present the results both in written form and through appropriate graphical representations. Finally, the conclusions drawn from your experiments should be clearly articulated.
-\vspace{1em}
+\vspace{5em}
 \noindent
-\frame{Code is available on GitHub: \href{https://github.com/quantumFeline/stats-group-proejct-1.git}{https://github.com/quantumFeline/stats-group-proejct-1.git}}
-
-Self-link:
+\frame{\large Code is available on GitHub: \href{https://github.com/quantumFeline/stats-group-proejct-1.git}{https://github.com/quantumFeline/stats-group-proejct-1.git}}
 
 \section{Boolean Network representation and construction}
 
@@ -224,7 +222,7 @@ For $n = 14..16$ we run bnf for the parameters:
     \item \textbf{Sampling frequency:} 1, 2, and 3.
     \item \textbf{Fraction of transient states:} 0.2, 0.6.
 \end{itemize}
-
+\noindent
 In the script we leave the version for reconstructing networks from all datasets.
 
 \section{Evaluation of the accuracy of the reconstructed network}
@@ -319,15 +317,16 @@ The normalized Structural Hamming distance measures the fraction of unordered pa
 
 \subsection{Results}
 
-We used a custom Python script (RunBNFExperiments.py) to fully automate the reconstruction process and evaluation.
-The script iterates over all combinations of parameters considered (see table in BNFinder2 usage) and collects the metrics measuring the Bayesian network restoration for each combination.
-The results are stored in a .tsv table.
+We used a custom Python script (\texttt{RunBnfExperiments.py}) to fully automate the reconstruction process and evaluation.
+The script iterates over all combinations of parameters considered (see the list in BNFinder2 usage) and saves results. Then a script \texttt{EvaluateAllBnfResults.py} is used to collect the metrics measuring the Bayesian network restoration for each combination.
+The results are stored in a .tsv table (\texttt{tables/evaluation\_asynchronous.tsv}, \texttt{tables/evaluation\_synchronous.tsv}).
 
-After the .tsv results are created, a separate script - NetworkAccuracyEvaluation.py goes over the results and displays the aggregated, averaged-out metrics depending on the given parameters.
-The following graph types were created:
+After the .tsv results are created, a separate script - \texttt{NetworkAccuracyEvaluation.py} goes over the results and displays the aggregated, averaged-out metrics depending on the given parameters.
+The following graph types were used:
 
 \begin{itemize}
-    \item Linear graph (metric against a parameters)
+    \item Linear graph (metric against a parameter)
+    \item Linear comparison graph (MDL vs BDE evaulation)
     \item Heatmap (metric against a pair of parameters)
     \item Bar plot (a collection different metrics against a parameter)
 \end{itemize}
@@ -375,7 +374,7 @@ The next step was to reconstruct Bayesian Network with MDL scoring function, whi
 To fully automate the reconstruction process and evaluation, a custom Python script was developed.
 This allowed for the batch processing of all 1014 datasets and the automatic calculation of all metrics defined in Part 1, eliminating the need for manual intervention.
 
-
+\subsection{Results}
 
 \section{Conclusions drawn from experiments}
 
@@ -403,7 +402,7 @@ Authors (given in alphabetical order) and their contributions to the project:
         \item Reconstructing the BN from created trajectories
         \item Calculating metrics for the model reconstruction from Part 2
         \item Creating graphical representation for the model\
-        \item Describing Part 2 in the report
+        \item Describing Part 2 in the report (6.1, 6.2, 6.3, without results in 6.4)
     \end{itemize}
     \item Nechaieva Veronika:
     \begin{itemize}
@@ -416,7 +415,7 @@ Authors (given in alphabetical order) and their contributions to the project:
         \item Processing and converting of the aggregated BNFinder results
         \item Implementing the graphs plotting (single-argument plots, heatmaps, metrics comparison)
         \item Evaluating the network-finding accuracy according to the implemented metrics
-        \item Report: result analysis (for subcases as well as the general cases) for Part I and Part II.
+        \item Report: result analysis (for subcases as well as the general cases) for Part 1 (5.2) and Part 2 (6.4).
         \item Editing and reviewing
     \end{itemize}
     \item Znamierowski Mikołaj:
