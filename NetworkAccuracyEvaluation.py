@@ -344,6 +344,21 @@ def generate_all_plots_tsv(tsv_path, output_dir='plots_tsv'):
                             'ntraj',
                             save_path='{}/metrics_by_ntraj.png'.format(output_dir),
                             metric_cols = ['hd_frac', 'shd_frac', 'precision', 'recall', 'f1'])
+    plot_metrics_comparison(df,
+                            group_by_col='len',
+                            metric_cols=['hd_frac', 'shd_frac', 'precision', 'recall', 'f1'],
+                            save_path='{}/metrics_by_len.png'.format(output_dir)
+                            )
+    plot_metrics_comparison(df,
+                            group_by_col='tf',
+                            metric_cols=['hd_frac', 'shd_frac', 'precision', 'recall', 'f1'],
+                            save_path='{}/metrics_by_tf.png'.format(output_dir)
+                            )
+    plot_metrics_comparison(df,
+                            group_by_col='sf',
+                            metric_cols=['hd_frac', 'shd_frac', 'precision', 'recall', 'f1'],
+                            save_path='{}/metrics_by_sf.png'.format(output_dir)
+                            )
 
     print("All plots saved to {}/".format(output_dir))
 
@@ -356,4 +371,5 @@ if __name__ == '__main__':
     #generate_all_plots_mir9('tables/MIR9_evaluation.csv')
 
     # For TSV data
-    generate_all_plots_tsv('tables/evaluation_asynchronous.tsv', output_dir="plots_tsv_async")
+    #generate_all_plots_tsv('tables/evaluation_asynchronous.tsv', output_dir="plots_tsv_async")
+    generate_all_plots_tsv('tables/evaluation_synchronous.tsv', output_dir="plots_tsv_sync")

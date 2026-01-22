@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepplots_tsv_sync/metrics_by_ntrajmargin=1in]{geometry}
+%\usepplots_tsv_sync/metrics_by_ntrajmargin=1in]{geometry}
 %\usepackage{polski}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -335,13 +335,94 @@ In theory, this should be able to pick up on stronger correlation, as in situati
 In practice, this results in having too little overall data to average out and, consequentially, too much noise.
 However, the plots from synchronous and asynchronous data were nevertheless separated for this section.
 
-We start with comparing the results for different metrics, depending on the number of trajectories (a strictly positive parameters - just more data with no downsides), in order to choose which metric to focus on.
+%We start with comparing the results for different metrics, depending on the number of trajectories (a strictly positive parameters - just more data with no downsides), in order to choose which metric to focus on.
 
-\begin{figure}[htp]
+We begin the analysis by presenting a complete overview of all evaluation metrics for both update modes.
+For each mode (synchronous and asynchronous), we show grouped bar plots comparing all computed accuracy metrics
+(Hamming distance fraction, Structural Hamming distance fraction, precision, recall, and F1 score)
+as a function of key experimental parameters.
+
+\subsubsection*{Synchronous update mode}
+
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_ntraj}
-    \label{fig:Metrics by number of trajectories}
+    \caption{Comparison of all accuracy metrics as a function of the number of trajectories (synchronous mode).}
+    \label{fig:sync_metrics_ntraj}
 \end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_len}
+    \caption{Comparison of all accuracy metrics as a function of trajectory length (synchronous mode).}
+    \label{fig:sync_metrics_len}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_nodes}
+    \caption{Comparison of all accuracy metrics as a function of network size (synchronous mode).}
+    \label{fig:sync_metrics_nodes}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_tf}
+    \caption{Comparison of all accuracy metrics as a function of transient fraction (synchronous mode).}
+    \label{fig:sync_metrics_tf}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_sf}
+    \caption{Comparison of all accuracy metrics as a function of sampling frequency (synchronous mode).}
+    \label{fig:sync_metrics_sf}
+\end{figure}
+
+\subsubsection*{Asynchronous update mode}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/metrics_by_ntraj}
+    \caption{Comparison of all accuracy metrics as a function of the number of trajectories (asynchronous mode).}
+    \label{fig:async_metrics_ntraj}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/metrics_by_len}
+    \caption{Comparison of all accuracy metrics as a function of trajectory length (asynchronous mode).}
+    \label{fig:async_metrics_len}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/metrics_by_nodes}
+    \caption{Comparison of all accuracy metrics as a function of network size (asynchronous mode).}
+    \label{fig:async_metrics_nodes}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/metrics_by_tf}
+    \caption{Comparison of all accuracy metrics as a function of transient fraction (asynchronous mode).}
+    \label{fig:async_metrics_tf}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/metrics_by_sf}
+    \caption{Comparison of all accuracy metrics as a function of sampling frequency (asynchronous mode).}
+    \label{fig:async_metrics_sf}
+\end{figure}
+
+
+
+%\begin{figure}[H]
+%    \centering
+%    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_ntraj}
+%    \label{fig:Metrics by number of trajectories}
+%\end{figure}
 
 From this graph we can see that the change in F1 tracks the performance change on the increased data volume most clearly.
 Therefore, for the next graphs we will focus on it as our primary metric.
@@ -349,13 +430,13 @@ Therefore, for the next graphs we will focus on it as our primary metric.
 Both increasing trajectory length and the number of trajectories improves the algorithm performance; however, increasing trajectory length has diminishing returns, capping at around 20.
 This is most likely because by this point the trajectory reached the attractor state, and cycling through it further does not provide any additional information.
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_sync/f1_vs_len}
     \label{fig:F1 depending on trajectory length}
 \end{figure}
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_sync/f1_vs_ntraj}
     \label{fig:F1 depending on dataset size}
@@ -363,7 +444,7 @@ This is most likely because by this point the trajectory reached the attractor s
 
 The graph size does not have significant effect on performance either way - it is more data to analyze but also a more complicated network structure to derive.
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_sync/f1_vs_nodes}
     \label{fig:F1 depending on graph size}
@@ -371,7 +452,7 @@ The graph size does not have significant effect on performance either way - it i
 
 When plotting against both trajectory length and dataset size, there is no significant correlation between the two - they both contribute positively to the result independently.
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_sync/heatmap_f1_ntraj_len}
     \label{fig:F1 depending on trajectory length and number of trajectories}
@@ -381,13 +462,13 @@ The asynchronous datasets results are similar.
 The main difference we can notice is that the trajectory length caps out more gradually - likely because for a given trajectory it is not guaranteed when the next step will get picked up.
 
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_async/f1_vs_len}
     \label{fig:F1 depending on trajectory length (async)}
 \end{figure}
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_async/f1_vs_ntraj}
     \label{fig:F1 depending on dataset size (async)}
@@ -395,13 +476,13 @@ The main difference we can notice is that the trajectory length caps out more gr
 
 The graph size does not have significant effect on performance either way - it is more data to analyze but also a more complicated network structure to derive.
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_async/f1_vs_nodes}
     \label{fig:F1 depending on graph size (async)}
 \end{figure}
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_async/heatmap_f1_ntraj_len}
     \label{fig:F1 depending on trajectory length and number of trajectories (async)}
@@ -455,13 +536,13 @@ A function was added to compare the results on sync and async datasets.
 The results on MIR9 dataset are less clear in comparison to artificial data.
 However, some positive correlation with the dataset size can be nevertheless observed:
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_mir9/sync_async_datapoints}
     \label{fig:F1 against datapoints; sync and async}
 \end{figure}
 
-\begin{figure}[htp]
+\begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_mir9/sync_async_length}
     \label{fig:F1 against trajectory length; sync and async}
