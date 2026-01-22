@@ -353,7 +353,7 @@ as a function of key experimental parameters.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_len}
+    \includegraphics[width=13cm]{plots_tsv/metrics_by_len}
     \caption{Comparison of all accuracy metrics as a function of trajectory length (synchronous mode).}
     \label{fig:sync_metrics_len}
 \end{figure}
@@ -367,14 +367,14 @@ as a function of key experimental parameters.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_tf}
+    \includegraphics[width=13cm]{plots_tsv/metrics_by_tf}
     \caption{Comparison of all accuracy metrics as a function of transient fraction (synchronous mode).}
     \label{fig:sync_metrics_tf}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_sf}
+    \includegraphics[width=13cm]{plots_tsv/metrics_by_sf}
     \caption{Comparison of all accuracy metrics as a function of sampling frequency (synchronous mode).}
     \label{fig:sync_metrics_sf}
 \end{figure}
@@ -416,18 +416,11 @@ as a function of key experimental parameters.
     \label{fig:async_metrics_sf}
 \end{figure}
 
-
-
-%\begin{figure}[H]
-%    \centering
-%    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_ntraj}
-%    \label{fig:Metrics by number of trajectories}
-%\end{figure}
-
-From this graph we can see that the change in F1 tracks the performance change on the increased data volume most clearly.
+From these graphs we can see that the F1 is the most responsive metric.
+Specifically, the change in F1 tracks the performance change most clearly in the sanity-check cases, such as increased data volume.
 Therefore, for the next graphs we will focus on it as our primary metric.
 
-Both increasing trajectory length and the number of trajectories improves the algorithm performance; however, increasing trajectory length has diminishing returns, capping at around 20.
+In the follow graphs we can observe that both increasing trajectory length and the number of trajectories improves the algorithm performance; however, increasing trajectory length has diminishing returns, capping at around 20.
 This is most likely because by this point the trajectory reached the attractor state, and cycling through it further does not provide any additional information.
 
 \begin{figure}[H]
@@ -460,6 +453,7 @@ When plotting against both trajectory length and dataset size, there is no signi
 
 The asynchronous datasets results are similar.
 The main difference we can notice is that the trajectory length caps out more gradually - likely because for a given trajectory it is not guaranteed when the next step will get picked up.
+The correlations are also more clearly observes, likely due to large total data volume as synchronous dataset omits some parameter combinations that are possible when in asynchronous mode.
 
 
 \begin{figure}[H]
@@ -474,8 +468,6 @@ The main difference we can notice is that the trajectory length caps out more gr
     \label{fig:F1 depending on dataset size (async)}
 \end{figure}
 
-The graph size does not have significant effect on performance either way - it is more data to analyze but also a more complicated network structure to derive.
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=13cm]{plots_tsv_async/f1_vs_nodes}
@@ -488,6 +480,24 @@ The graph size does not have significant effect on performance either way - it i
     \label{fig:F1 depending on trajectory length and number of trajectories (async)}
 \end{figure}
 
+As for the scoring method, we can see that while the performance is generally comparable, MDL stably gives slightly better results than BDE.
+There are no significant gaps in performance that would clearly favour one method over enough - MDL is just stably slightly better across the board.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/f1_vs_nodes_by_score}
+    \label{fig:MDL vs BDE}
+\end{figure}.png
+
+Similar picture can be observed for asynchronous graphs, with advantage somewhat more apparent.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/f1_vs_nodes_by_score}
+    \label{fig:MDL vs BDE (async)}
+\end{figure}.png
+
+In the next part we therefore choose MDL as our only scoring method.
 
 \section{Reconstructing the model of a real-life biological mechanism}
 \subsection{Chosen Model}
