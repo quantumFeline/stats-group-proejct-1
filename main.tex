@@ -1,6 +1,5 @@
 \documentclass{article}
-\usepackage[utf8]{inputenc}
-\usepackage[margin=1in]{geometry}
+\usepplots_tsv_sync/metrics_by_ntrajmargin=1in]{geometry}
 %\usepackage{polski}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -324,14 +323,88 @@ After the .tsv results are created, a separate script - NetworkAccuracyEvaluatio
 The following graph types were created:
 
 \begin{itemize}
-    \item Linear graph (metric against a parameters)
+    \item Linear graph (metric against a parameter)
     \item Heatmap (metric against a pair of parameters)
     \item Bar plot (a collection different metrics against a parameter)
 \end{itemize}
 
-For most graphs presented we use aggregated metric, i.e.\ we consider all possible values of the parameters not analysed in the given graph; we also created some graphs where the other parameters are fixed.
-In theory, this should be able to pick up on stronger correlation, as in situations where other parameters are suboptimal (e.g. good trajectory length but too few data points or vice versa) there is more noise, which may make the positive trends less apparent.
+For most graphs presented we use aggregated metric, i.e.\ we consider all possible values of the parameters not analyzed in the given graph; we also created some graphs where the other parameters are fixed.
+In theory, this should be able to pick up on stronger correlation, as in situations where other parameters are suboptimal (e.g.\ good trajectory length but too few data points or vice versa) there is more noise, which may make the positive trends less apparent.
 In practice, this results in having too little overall data to average out and, consequentially, too much noise.
+However, the plots from synchronous and asynchronous data were nevertheless separated for this section.
+
+We start with comparing the results for different metrics, depending on the number of trajectories (a strictly positive parameters - just more data with no downsides), in order to choose which metric to focus on.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/metrics_by_ntraj}
+    \label{fig:Metrics by number of trajectories}
+\end{figure}
+
+From this graph we can see that the change in F1 tracks the performance change on the increased data volume most clearly.
+Therefore, for the next graphs we will focus on it as our primary metric.
+
+Both increasing trajectory length and the number of trajectories improves the algorithm performance; however, increasing trajectory length has diminishing returns, capping at around 20.
+This is most likely because by this point the trajectory reached the attractor state, and cycling through it further does not provide any additional information.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/f1_vs_len}
+    \label{fig:F1 depending on trajectory length}
+\end{figure}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/f1_vs_ntraj}
+    \label{fig:F1 depending on dataset size}
+\end{figure}
+
+The graph size does not have significant effect on performance either way - it is more data to analyze but also a more complicated network structure to derive.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/f1_vs_nodes}
+    \label{fig:F1 depending on graph size}
+\end{figure}
+
+When plotting against both trajectory length and dataset size, there is no significant correlation between the two - they both contribute positively to the result independently.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_sync/heatmap_f1_ntraj_len}
+    \label{fig:F1 depending on trajectory length and number of trajectories}
+\end{figure}
+
+The asynchronous datasets results are similar.
+The main difference we can notice is that the trajectory length caps out more gradually - likely because for a given trajectory it is not guaranteed when the next step will get picked up.
+
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/f1_vs_len}
+    \label{fig:F1 depending on trajectory length (async)}
+\end{figure}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/f1_vs_ntraj}
+    \label{fig:F1 depending on dataset size (async)}
+\end{figure}
+
+The graph size does not have significant effect on performance either way - it is more data to analyze but also a more complicated network structure to derive.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/f1_vs_nodes}
+    \label{fig:F1 depending on graph size (async)}
+\end{figure}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_tsv_async/heatmap_f1_ntraj_len}
+    \label{fig:F1 depending on trajectory length and number of trajectories (async)}
+\end{figure}
+
 
 \section{Reconstructing the model of a real-life biological mechanism}
 \subsection{Chosen Model}
@@ -369,12 +442,30 @@ The total number of combinations is calculated as $13 \times 13 \times 2 \times 
 
 \subsection{Reconstructing}
 The next step was to reconstruct Bayesian Network with MDL scoring function, which was chosen based on the insights from the first Part.
-To fully automate the reconstruction process and evaluation, a custom Python script was developed.
-This allowed for the batch processing of all 1014 datasets and the automatic calculation of all metrics defined in Part 1, eliminating the need for manual intervention.
+This allowed for the batch processing of all 1014 datasets and the automatic calculation of all metrics defined in Part 1.
 
-
+The evaluation process was analogous to evaluation in part 1.
+While some technical modifications were needed in order to account for a different data format (.csv file, column names, number formatting), the general approach was the same for both evaluations, and the script could be easily extended.
+A function was added to compare the results on sync and async datasets.
 
 \section{Conclusions drawn from experiments}
+
+The results on MIR9 dataset are less clear in comparison to artificial data.
+However, some positive correlation with the dataset size can be nevertheless observed:
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_mir9/sync_async_datapoints}
+    \label{fig:F1 against datapoints; sync and async}
+\end{figure}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{plots_mir9/sync_async_length}
+    \label{fig:F1 against trajectory length; sync and async}
+\end{figure}
+
+This is likely due to the real-life being noisier.
 
 \section{Contributions}
 

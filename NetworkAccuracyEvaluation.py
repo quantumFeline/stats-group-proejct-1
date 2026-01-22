@@ -289,11 +289,11 @@ def generate_all_plots_mir9(csv_path, output_dir='plots_mir9'):
     plot_metrics_comparison(df,
                             'datapoints',
                             save_path='{}/metrics_by_datapoints.png'.format(output_dir),
-                            metric_cols = ['prec', 'rec', 'f1'])
+                            metric_cols = ['prec', 'rec', 'f1', 'hd_frac', 'shd_frac'])
     plot_metrics_comparison(df,
                             'trajectory_len',
                             save_path='{}/metrics_by_length.png'.format(output_dir),
-                            metric_cols = ['prec', 'rec', 'f1'])
+                            metric_cols = ['prec', 'rec', 'f1', 'hd_frac', 'shd_frac'])
 
     # Sync vs Async comparison
     plot_sync_vs_async_comparison(df, metric='f1', group_col='datapoints',
@@ -356,4 +356,4 @@ if __name__ == '__main__':
     #generate_all_plots_mir9('tables/MIR9_evaluation.csv')
 
     # For TSV data
-    generate_all_plots_tsv('tables/evaluation_synchronous.tsv', output_dir="plots_tsv_sync")
+    generate_all_plots_tsv('tables/evaluation_asynchronous.tsv', output_dir="plots_tsv_async")
