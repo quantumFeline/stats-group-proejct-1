@@ -371,5 +371,5 @@ if __name__ == '__main__':
     #generate_all_plots_mir9('tables/MIR9_evaluation.csv')
 
     # For TSV data
-    #generate_all_plots_tsv('tables/evaluation_asynchronous.tsv', output_dir="plots_tsv_async")
-    generate_all_plots_tsv('tables/evaluation_synchronous.tsv', output_dir="plots_tsv_sync")
+    generate_all_plots_tsv('tables/evaluation_asynchronous.tsv', output_dir="plots_tsv_async")
+    #generate_all_plots_tsv('tables/evaluation_synchronous.tsv', output_dir="plots_tsv_sync")
