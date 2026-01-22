@@ -30,7 +30,7 @@
 
 \section{Boolean Network representation and construction}
 
-In this section we describe the implementation of the code handling Boolean networks. We divide it into four subsections for better readability.
+In this section we describe the implementation of the code handling Boolean networks contained in \texttt{BooleanNetwork.py}. We divide it into four subsections for better readability.
 
 \subsection{Creation of the network}
 
@@ -177,15 +177,37 @@ The dataset generation process is implemented in \texttt{GenerateTrajectories.py
     \item \textbf{Trajectory length:} 13 values ranging from 3 to 39 (step size of 3).
     \item \textbf{Update mode:} Synchronous and Asynchronous.
     \item \textbf{Sampling frequency:} 1, 2, and 3.
+    \item \textbf{Fraction of transient states:} 0.2, 0.4, 0.6, 0.8.
 \end{itemize}
 
-In some cases, it was not possible to generate a dataset with the requested characteristics. This typically occurred for small networks (small $n$) and synchronous update mode, where the combination of a long required trajectory length and a high transient fraction made it impossible to find enough trajectory fragments that satisfied the criteria. In such cases, the dataset generation function returned \texttt{None} and no dataset was created for that parameter combination.
+In some cases, it was not possible to generate a dataset with the requested characteristics. This typically occurred for small networks (small $n$) and synchronous update mode, where the combination of a long required trajectory length and a high transient fraction made it impossible to find enough trajectory fragments that satisfied the criteria. In such cases, the dataset generation function returned \texttt{None} and no dataset was created for that parameter combination.\newline\newline
 
 \section{BNFinder2 usage}
 
-BNFinder2 was used to reconstruct networks from generated datasets (trajectories). Since the tool relies on the deprecated Python 2.7 and specific libraries (Scipy, FPConst), an isolated Conda environment was established to resolve dependency conflicts.
+BNFinder2 was used to reconstruct networks from generated datasets (trajectories). Since the tool relies on the deprecated Python 2.7 and specific libraries (Scipy, FPConst), an isolated Conda environment was established to resolve dependency conflicts.\newline\newline
 
-The execution of BNFinder2 on datasets derived from synthetic networks is implemented in the \texttt{RunBnfExperiments.py} script.
+The execution of BNFinder2 on datasets derived from synthetic networks is implemented in the \texttt{RunBnfExperiments.py} script.\newline\newline
+
+Due to a long computation time, we needed to reduce the number of parameters in a grid for bigger number of nodes.\newline\newline
+For $n = 5..13$ we run bnf for the parameters:
+\begin{itemize}
+    \item \textbf{Number of data points:} 13 values ranging from 3 to 39 (step size of 3).
+    \item \textbf{Trajectory length:} 13 values ranging from 3 to 39 (step size of 3).
+    \item \textbf{Update mode:} Synchronous and Asynchronous.
+    \item \textbf{Sampling frequency:} 1, 2, and 3.
+    \item \textbf{Fraction of transient states:} 0.2, 0.4, 0.6, 0.8.
+\end{itemize}
+\vspace{0.5em}
+For $n = 14..16$ we run bnf for the parameters:
+\begin{itemize}
+    \item \textbf{Number of data points:} 3, 15, 27, 39.
+    \item \textbf{Trajectory length:} 3, 15, 27, 39.
+    \item \textbf{Update mode:} Synchronous and Asynchronous.
+    \item \textbf{Sampling frequency:} 1, 2, and 3.
+    \item \textbf{Fraction of transient states:} 0.2, 0.6.
+\end{itemize}
+
+In the script we leave the version for reconstructing networks from all datasets.
 
 \section{Evaluation of the accuracy of the reconstructed network}
 
@@ -302,7 +324,7 @@ $f_4(x_0, x_3) = \neg x_3 \land \neg x_0$
 $f_5(x_0, x_4) = \neg x_4 \land \neg x_0$
 
 \subsection{Datasets Generation}
-A total of 1014 datasets were generated to assess the algorithm's robustness. The datasets covered a combination of the following parameters:
+A total of 1014 datasets were generated using BooleanNetwork class method create\_dataset from \texttt{BooleanNetwork.py} to assess the algorithm's robustness. The datasets covered a combination of the following parameters:
 \begin{itemize}
     \item \textbf{Number of data points:} 13 values ranging from 3 to 39 (step size of 3).
     \item \textbf{Trajectory length:} 13 values ranging from 3 to 39.
