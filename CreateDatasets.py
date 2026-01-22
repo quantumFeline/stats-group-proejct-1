@@ -23,6 +23,8 @@ if __name__ == '__main__':
                         help='Ground truth network filename (default: ground_truth_network.txt)')
     parser.add_argument('-n', '--nodes', type=int, default=DEFAULT_N_NODES,
                         help='Number of nodes (default: 5)')
+    parser.add_argument('-f', '--frequency', type=int, default=1,
+                        help='Sampling frequency (default: 1)')
     parser.add_argument('-d', '--datapoints', type=int, default=DEFAULT_DATASET_LENGTH,
                         help='Number of trajectories (default: 5)')
     parser.add_argument('-l', '--length', type=int, default=DEFAULT_TRAJECTORY_LENGTH,
@@ -49,7 +51,7 @@ if __name__ == '__main__':
     #======================================================================================================================================================
 
     # Create a dataset in a reproducible way
-    sampling_frequency = 1
+    sampling_frequency = args.frequency
     starting_states = [] # if left empty, the starting states will be randomized for each datapoint; uncomment the next line for always starting at 0
     # starting_states = [0] * number_of_datapoints
     # If you want to specify some of the starting states, you have to write a list of length `number_of_datapoints` of ints and Nones,
