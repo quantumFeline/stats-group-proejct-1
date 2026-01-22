@@ -176,8 +176,8 @@ The dataset generation process is implemented in \texttt{GenerateTrajectories.py
     \item \textbf{Loop:} For each combination of dataset parameters (number of trajectories, trajectory length, sampling frequency and transient fraction) the sampling process is applied to create dataset fragments with the requested characteristics.
     \begin{itemize}
 
-    \item \textbf{Fragment candidate identification:} For each long trajectory, multiple candidate fragments are considered by varying the starting offset (from 0 to \texttt{sampling\_frequency}-1) and applying the user-defined sampling frequency. Each candidate fragment is checked to ensure it contains at least the required number of transient states and attractor states according to the desired fraction. Only fragments meeting these criteria are retained as candidates.
-
+    \item \textbf{Fragment candidate identification:} For each long trajectory, multiple candidate fragments are considered by varying the starting offset (from 0 to \texttt{sampling\_frequency}-1) and applying the user-defined sampling frequency. Each candidate fragment is checked to ensure it contains at least the required number of transient states and attractor states according to the desired fraction. Only fragments meeting these criteria are retained as candidates - each candidate is represented as a pair consisting of the long trajectory before applying the sampling frequency and the offset.
+    
     \item \textbf{Fragment shuffling, trimming, and uniqueness check:} Candidate fragments are first randomly shuffled. Then, for each candidate, if the dataset has not yet reached the desired number of trajectories, a fragment is selected by taking every \texttt{sampling\_frequency}-th state and deterministically picking the last required transient states and the first required attractor states. This ensures that each fragment has the desired length and maintains the intended proportion of transient to attractor states. After trimming, each fragment is represented as a tuple and checked against already selected fragments. If the fragment is already included, it is skipped. This process guarantees that all trajectories in the final dataset are distinct and that the dataset contains the requested number of trajectories.
 
     \item \textbf{Insufficient candidate handling:} If at any stage there are not enough fragments to satisfy the requested number of trajectories - either because the number of candidate fragments before trimming is too small, or because there are not enough unique fragments after trimming - the sampling function returns \texttt{None}. This guarantees that no dataset is created with fewer trajectories than requested.
@@ -185,6 +185,11 @@ The dataset generation process is implemented in \texttt{GenerateTrajectories.py
 \end{enumerate}
 
 \subsection{Description of the datasets generated}
+
+The ground truth network representations are located in the \texttt{ground\_truth\_networks} directory.
+Example datasets (input files for BNFinder2) are available in the \texttt{datasets} directory. Only datasets for the 10-node network are included in the repository for demonstration purposes; the remaining datasets are stored locally.\newline\newline
+
+Characteristics of the datasets:
 
 \begin{itemize}
     \item \textbf{Network size ($n$):} The number of nodes in the Boolean network, ranging from 5 to 16. For each $n$, a separate Boolean network is created.
@@ -200,9 +205,9 @@ In some cases, it was not possible to generate a dataset with the requested char
 \section{BNFinder2 usage}
 
 BNFinder2 was used to reconstruct networks from generated datasets (trajectories). Since the tool relies on the deprecated Python 2.7 and specific libraries (Scipy, FPConst), an isolated Conda environment was established to resolve dependency conflicts.\newline\newline
-
 The execution of BNFinder2 on datasets derived from synthetic networks is implemented in the \texttt{RunBnfExperiments.py} script.\newline\newline
-
+Example BNFinder2 results are available in the \texttt{results} directory. Only results for the 10-node network are included in the repository for demonstration purposes; the remaining result files are stored locally.\newline\newline
+\noindent
 Due to a long computation time, we needed to reduce the number of parameters in a grid for bigger number of nodes.\newline\newline
 For $n = 5..13$ we run bnf for the parameters:
 \begin{itemize}
@@ -222,7 +227,7 @@ For $n = 14..16$ we run bnf for the parameters:
     \item \textbf{Fraction of transient states:} 0.2, 0.6.
 \end{itemize}
 \noindent
-In the script we leave the version for reconstructing networks from all datasets.
+In the repository we leave the version of a script for reconstructing networks from all datasets (the whole grid of parameters for all networks).
 
 \section{Evaluation of the accuracy of the reconstructed network}
 
@@ -339,7 +344,7 @@ However, the plots from synchronous and asynchronous data were nevertheless sepa
 
 We begin the analysis by presenting a complete overview of all evaluation metrics for both update modes.
 For each mode (synchronous and asynchronous), we show grouped bar plots comparing all computed accuracy metrics
-(Hamming distance fraction, Structural Hamming distance fraction, precision, recall, and F1 score)
+(Hamming distance normalized, Structural Hamming distance normalized, precision, recall, and F1 score)
 as a function of key experimental parameters.
 
 \subsubsection*{Synchronous update mode}
